@@ -6,6 +6,8 @@ export type ReplayClip = {
   title: string;
   subtitle: string;
   segments: readonly Segment[];
+  /** Frame rate of the video when it is not the camera's (dev test videos) */
+  fps?: number;
 };
 
 export type ReplayClips = { clips: ReplayClip[]; initialIndex: number };
