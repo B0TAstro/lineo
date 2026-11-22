@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Camera, type CameraDevice, type CameraSessionConfig } from 'react-native-vision-camera';
 
@@ -22,6 +23,7 @@ export function MatchSidebar({
   onToggleVoice,
   onInvite,
   onLeave,
+  previewOverlay,
 }: {
   camera: MatchCamera;
   device: CameraDevice;
@@ -35,6 +37,8 @@ export function MatchSidebar({
   /** Host only: shows the QR code. */
   onInvite: (() => void) | undefined;
   onLeave: () => void;
+  /** Drawn over the camera preview (dev: the live ball tracking). */
+  previewOverlay?: ReactNode;
 }) {
   return (
     <>
@@ -54,6 +58,7 @@ export function MatchSidebar({
           }
           resizeMode="cover"
         />
+        {previewOverlay}
       </View>
       <Text style={[styles.rec, !recording && styles.recOff]}>
         {recording ? '● REC' : matchOver ? 'Match terminé' : 'Caméra en pause'}

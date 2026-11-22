@@ -4,5 +4,5 @@ export type { Timeline } from './logic/timeline';
 export { buildTimeline, locate } from './logic/timeline';
 export { useClipRecorder } from './useClipRecorder';
 export { useClipsFromLog } from './useClipsFromLog';
-export type { MatchCamera } from './useMatchCamera';
+export type { CameraFrame, MatchCamera } from './useMatchCamera';
 export { TARGET_FPS, useMatchCamera } from './useMatchCamera';

@@ -46,7 +46,8 @@ iOS **et** Android, et une session doit fonctionner avec un iPhone et un Android
 | Lecture vidéo | react-native-video |
 | Gestes, zoom | react-native-gesture-handler, react-native-reanimated |
 | Voix | react-native-vosk + `vosk-model-small-fr-0.22`, grammaire contrainte |
-| Liaison | Bluetooth Low Energy en priorité (lib candidate : `munim-bluetooth`), Wi-Fi local en secours |
+| Liaison | Bluetooth Low Energy en priorité (`munim-bluetooth`), Wi-Fi local en secours |
+| Chiffrement | `@noble/ciphers` (XChaCha20-Poly1305), `expo-crypto` pour la clé de session |
 | Vision | `react-native-fast-opencv` pour les pixels, maths en TypeScript |
 | Tests | Jest (jest-expo) |
 | CI | GitHub Actions |
@@ -59,7 +60,7 @@ Schémas (Mermaid, affichés par GitHub) : `docs/architecture.md`, `docs/parcour
 
 ```
 models/         modèle Vosk (téléchargé par `npm run setup:model`, jamais commité)
-modules/        modules natifs locaux (sound-levels : niveau sonore d'un clip, pour les pics du replay)
+modules/        modules natifs locaux (sound-levels : niveau sonore d'un clip, pour les pics du replay ; clip-frames : images d'un clip, pour le suivi de balle)
 assets/         icon/ (icône, splash) et images/ (images de l'interface) uniquement
 src/
 ├── app/        routes expo-router, minces : elles lisent leurs paramètres et affichent un écran
@@ -68,6 +69,7 @@ src/
 │   ├── recording/    un fichier par point : file des clips, enregistreur, caméra du match
 │   ├── replay/       VAR : lecteur, panneau de lecture, décisions des joueurs
 │   ├── sound-peaks/  pics sonores d'un clip (resserviront au rebond, v0.9)
+│   ├── ball-tracking/ balle suivie dans le replay (OpenCV + Kalman)
 │   ├── voice/        annonce du serveur → score (Vosk)
 │   ├── score/        affichage du score
 │   └── match/        l'écran de match, qui assemble les autres
@@ -193,6 +195,22 @@ Ce qui est en place en v0.3 :
 - On peut aussi **fermer le replay sans rien changer** au score.
 - Avec la lecture assistée (v0.9), le replay peut afficher une **suggestion chiffrée** (« 80 % sûr que la balle est sortie »), jamais un avis tranché ni un bouton qui l'applique.
 
+## Balle suivie (v0.5)
+
+Portage du POC 1 (`temoin-poc-cv-tracking`, tag `poc1-ball-tracking`), dans `features/ball-tracking`.
+
+- **Sur demande seulement** : le bouton « Balle » du replay analyse **tout le point affiché** (tous ses fichiers, du premier au dernier) et relance la lecture depuis le début. La trajectoire est publiée au fur et à mesure : le replay joue pendant que l'analyse avance devant lui. Rien ne tourne pendant qu'on filme. Changer de point efface le résultat. Une piste par fichier (la coupe entre deux fichiers est un saut dans le temps).
+- **Images** : `modules/clip-frames` (AVAssetReader en BGRA sur iOS, MediaExtractor + MediaCodec en YUV sur Android) lit chaque fichier dans l'ordre, une image à la fois, réduite à 640 px de côté long, redressée selon la rotation du fichier, en RGB compact (`ArrayBuffer`). La réduction en natif évite de faire passer 2,7 Mo par image 720p au JS. Un seul lecteur à la fois.
+- **Pixels** : `react-native-fast-opencv` 1.0.1 (`native/OpenCvDetector.ts`, seul fichier qui l'importe) : flou 5×5, RGB → HSV, `inRange`, ouverture puis fermeture (noyau ellipse), contours externes, puis aire, périmètre et boîte englobante de chaque contour. La lib n'a pas `minEnclosingCircle` : centre = milieu de la boîte, rayon = son grand côté / 2.
+  - iOS : patch `patches/react-native-fast-opencv+1.0.1.patch` (repris de la PR #119 du dépôt, non fusionnée) : la lib s'installait par l'ancien pont (`RCTCxxBridge`), supprimé depuis RN 0.87. Elle passe par `RCTTurboModuleWithJSIBindings`.
+  - Android : OpenCV 4.12 (Maven), environ 23,5 Mo non compressés par architecture. iOS : OpenCV 4.9.
+- **Maths** (`logic/`, TS pur) : circularité `4πA/P²`, score du POC (0,3 aire + 0,3 circularité + 0,4 proximité de la prédiction, sans seuil de distance), filtre de Kalman 4 états à vitesse constante écrit à la main (Q = 0,03·I, R = 0,1·I, part à vitesse nulle, `dt` réel), balle « prédite » 8 images au plus avant d'abandonner la piste. Vitesse et accélération comme le POC : historique de 64 positions filtrées, pente par moindres carrés sur les 5 derniers échantillons (`linearSlope`, `finiteDifference`), pas l'état du filtre.
+- **Réglages** (`logic/ballConfig.ts`) : copiés du `configs/ball.yaml` du POC, calibré sur une balle jaune avec `apps/calibrate_hsv` : HSV `[20, 70, 70]` → `[45, 255, 255]`, aire 150 à 120 000 px², ouverture 5, fermeture 9, circularité 0,6. Mesurés près d'une webcam : au fond du court la balle est plus petite, l'aire minimale sera à revoir.
+- **Affichage**, comme le POC : traîne des 32 dernières positions (plus épaisse et plus vive vers maintenant, coupée quand la piste est perdue), cercle au rayon de la balle (jaune vue, orange prédite) et son centre, flèche rouge de vitesse (longueur = vitesse × 0,15), et le bandeau : résolution, % de balle vue, état, images sans détection, position, rayon, vitesse et norme, accélération. Le calque est dans `ZoomableView`, il zoome avec la vidéo ; la position suit le letterbox de `contain`. Aucun dedans / dehors.
+- **Vidéos test (dev seulement)** : `npm run dev:videos` copie des vidéos de vrais matchs (par défaut `../temoin-poc-ball-tracking/data/videos`) dans `Documents/dev-videos` de l'app sur l'iPhone branché (`xcrun devicectl`, iOS seulement), avec un `index.json` (durée et fps lus par `ffprobe`). Rien n'entre dans le build. Dans le replay, « Vidéos test » remplace les points du match par ces vidéos, sans les boutons de décision : on teste le suivi sans filmer un match.
+- **Balle live (dev seulement)** : bouton « Balle live » dans les stats dev de l'écran du score. La sortie d'images de la caméra (640×360) passe en RGB redressé, et une image à la fois part au JS (`useMatchCamera(onCameraFrame)`, drapeau `createSynchronizable` : la suivante n'est envoyée qu'une fois la précédente traitée). Même détecteur et même tracker que le replay, anneau et traîne sur l'aperçu caméra, temps par image affiché. Sert à régler la couleur et les tailles sur le court ; jamais dans un build de release.
+- **À vérifier sur un vrai court** : vitesse d'analyse sur les deux téléphones (à ×0,5, une vidéo à 60 i/s demande 30 images analysées par seconde, soit moins de 33 ms par image, pour que l'analyse reste devant la lecture) ; plage HSV au soleil et à l'ombre ; balle au fond du court ; alignement du calque en image par image (rotation du fichier, caméra avant).
+
 ## Lecture assistée (v0.5, v0.7 à v0.9)
 
 Tourne **uniquement sur le point demandé**, jamais en continu.
@@ -223,6 +241,7 @@ npm test
 npm run typecheck
 npm run lint
 npm run format:check
+npm run dev:videos           # dev : copie des vidéos de test sur l'iPhone (replay → « Vidéos test »)
 
 # Release : passer "version" de app.json et package.json à X.Y.Z, merger sur main.
 # Android : la CI voit une version sans tag, construit l'APK, crée le tag et la release.

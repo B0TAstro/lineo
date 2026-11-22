@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BallHud, BallTrackOverlay, useLiveBallTrack } from '@/features/ball-tracking';
 import { TARGET_FPS, useClipRecorder, useClipsFromLog, useMatchCamera } from '@/features/recording';
 import { outcomeEvents, ReplayScreen, useVarReplay } from '@/features/replay';
 import { ScoreDisplay } from '@/features/score';
@@ -26,7 +27,10 @@ export function MatchScreen({ session }: { session: MatchSession }) {
   const setup = useMemo(() => toMatchSetup(session.form), [session.form]);
 
   useKeepAwake(); // otherwise the screen locks and the OS stops the camera
-  const camera = useMatchCamera();
+  // Dev builds only: the replay's ball tracking, live on the camera, to tune it on a court
+  const [liveBallOn, setLiveBallOn] = useState(false);
+  const liveBall = useLiveBallTrack(__DEV__ && liveBallOn);
+  const camera = useMatchCamera(liveBall.onFrame);
   const appActive = useAppActive();
   const [showQr, setShowQr] = useState(false);
   const [voiceOn, setVoiceOn] = useState(true);
@@ -89,6 +93,15 @@ export function MatchScreen({ session }: { session: MatchSession }) {
             onToggleVoice={() => setVoiceOn(!voiceOn)}
             onInvite={session.role === 'host' ? () => setShowQr(true) : undefined}
             onLeave={leave}
+            previewOverlay={
+              liveBall.onFrame && liveBall.frame ? (
+                <BallTrackOverlay
+                  points={liveBall.trail}
+                  video={liveBall.frame}
+                  timeS={liveBall.t}
+                />
+              ) : undefined
+            }
           />
         </View>
 
@@ -109,6 +122,19 @@ export function MatchScreen({ session }: { session: MatchSession }) {
               sessionId={session.sessionId}
               eventCount={log.length}
               voiceError={voice.error}
+              liveBall={liveBallOn}
+              liveBallMs={liveBall.ms}
+              onToggleLiveBall={() => setLiveBallOn(!liveBallOn)}
+            />
+          )}
+          {__DEV__ && liveBall.onFrame && liveBall.frame && (
+            <BallHud
+              points={liveBall.trail}
+              timeS={liveBall.t}
+              frame={liveBall.frame}
+              frames={liveBall.frames}
+              seen={liveBall.seen}
+              extra={`${liveBall.ms.toFixed(0)} ms / image`}
             />
           )}
         </View>

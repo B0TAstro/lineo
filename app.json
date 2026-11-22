@@ -2,7 +2,7 @@
   "expo": {
     "name": "Témoin",
     "slug": "temoin",
-    "version": "0.4.0",
+    "version": "0.5.0",
     "orientation": "default",
     "icon": "./assets/icon/icon.png",
     "scheme": "temoin",
