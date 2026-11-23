@@ -63,7 +63,8 @@
             "extraProguardRules": "# Vosk calls its native library through JNA, by reflection: R8 must keep it.\n# JNA's desktop-only window helpers reference java.awt, absent on Android.\n-dontwarn java.awt.**\n-keep class com.sun.jna.** { *; }\n-keepclassmembers class * extends com.sun.jna.** { public *; }\n-keep class org.vosk.** { *; }\n"
           }
         }
-      ]
+      ],
+      "expo-status-bar"
     ],
     "experiments": {
       "reactCompiler": true
