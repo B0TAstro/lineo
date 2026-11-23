@@ -38,7 +38,59 @@
         }
       ],
       "react-native-video",
-      "expo-font",
+      [
+        "expo-font",
+        {
+          "ios": {
+            "fonts": [
+              "node_modules/@expo-google-fonts/outfit/100Thin/Outfit_100Thin.ttf",
+              "node_modules/@expo-google-fonts/outfit/300Light/Outfit_300Light.ttf",
+              "node_modules/@expo-google-fonts/outfit/400Regular/Outfit_400Regular.ttf",
+              "node_modules/@expo-google-fonts/outfit/500Medium/Outfit_500Medium.ttf"
+            ]
+          },
+          "android": {
+            "fonts": [
+              {
+                "fontFamily": "Outfit-Thin",
+                "fontDefinitions": [
+                  {
+                    "path": "node_modules/@expo-google-fonts/outfit/100Thin/Outfit_100Thin.ttf",
+                    "weight": 100
+                  }
+                ]
+              },
+              {
+                "fontFamily": "Outfit-Light",
+                "fontDefinitions": [
+                  {
+                    "path": "node_modules/@expo-google-fonts/outfit/300Light/Outfit_300Light.ttf",
+                    "weight": 300
+                  }
+                ]
+              },
+              {
+                "fontFamily": "Outfit-Regular",
+                "fontDefinitions": [
+                  {
+                    "path": "node_modules/@expo-google-fonts/outfit/400Regular/Outfit_400Regular.ttf",
+                    "weight": 400
+                  }
+                ]
+              },
+              {
+                "fontFamily": "Outfit-Medium",
+                "fontDefinitions": [
+                  {
+                    "path": "node_modules/@expo-google-fonts/outfit/500Medium/Outfit_500Medium.ttf",
+                    "weight": 500
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
       [
         "munim-bluetooth",
         {
