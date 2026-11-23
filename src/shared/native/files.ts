@@ -1,6 +1,6 @@
 import { File } from 'expo-file-system';
 
-/** The camera returns plain paths; expo-file-system and the video player want a file:// URI. */
+/** The camera returns plain paths; expo-file-system and the video player want a file:// URI */
 export const toUri = (path: string) => (path.startsWith('file://') ? path : `file://${path}`);
 
 export function deleteFile(path: string) {

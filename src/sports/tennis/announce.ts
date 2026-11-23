@@ -1,9 +1,8 @@
 import type { MatchState, Point, SideId } from './types';
 
 /* ───────────────────────────────────────────────────────────────────────────
- * The STRING LITERALS below are spoken French, not identifiers. They are the
- * data we match heard speech against. Translating them breaks recognition.
- * Same rule applies to nlp/lexicon.ts.
+ * The STRING LITERALS below are spoken French, not identifiers. They are the data we match heard speech against.
+ * Translating them breaks recognition. Same rule applies to nlp/lexicon.ts.
  * ──────────────────────────────────────────────────────────────────────── */
 
 const POINT_WORD: Record<string, string> = {

@@ -2,7 +2,7 @@
   "expo": {
     "name": "Témoin",
     "slug": "temoin",
-    "version": "0.4.0",
+    "version": "0.5.0",
     "orientation": "default",
     "icon": "./assets/icon/icon.png",
     "scheme": "temoin",
@@ -13,7 +13,8 @@
       "supportsTablet": false,
       "infoPlist": {
         "NSCameraUsageDescription": "Témoin filme le court point par point pour revoir un point contesté. La vidéo reste sur ce téléphone et est supprimée en fin de match."
-      }
+      },
+      "appleTeamId": "8J5GF7NGYS"
     },
     "android": {
       "package": "com.tomboullay.temoin",
@@ -62,7 +63,8 @@
             "extraProguardRules": "# Vosk calls its native library through JNA, by reflection: R8 must keep it.\n# JNA's desktop-only window helpers reference java.awt, absent on Android.\n-dontwarn java.awt.**\n-keep class com.sun.jna.** { *; }\n-keepclassmembers class * extends com.sun.jna.** { public *; }\n-keep class org.vosk.** { *; }\n"
           }
         }
-      ]
+      ],
+      "expo-status-bar"
     ],
     "experiments": {
       "reactCompiler": true

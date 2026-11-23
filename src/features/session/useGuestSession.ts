@@ -11,6 +11,7 @@ import { SealedCodec } from './logic/SealedCodec';
 import { BleGuest } from './native/ble/BleGuest';
 import type { GuestTransport, LinkStatus } from './native/Transport';
 import type { GuestSession } from './Session';
+import { completeForm } from './setup';
 
 /**
  * A guest mirrors the host's log. Its actions are sent to the host as intents and only count
@@ -36,7 +37,7 @@ export function useGuestSession(sessionId: string, key: string): GuestSession {
       codec,
       (message) => {
         if (message.t === 'snapshot') {
-          setForm(message.setup);
+          setForm(completeForm(message.setup));
           logRef.current = receiveSnapshot(logRef.current, message.log);
         } else if (message.t === 'event') {
           const received = receiveEvent(logRef.current, message.event);

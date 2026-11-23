@@ -1,13 +1,15 @@
 import { type ReactNode, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Video, { type VideoRef } from 'react-native-video';
 
+import { BallHud, BallTrackOverlay, useBallTrack } from '@/features/ball-tracking';
 import { buildTimeline, locate, type Segment } from '@/features/recording';
 import { stopBeforePeak, useSoundPeaks } from '@/features/sound-peaks';
 import { toUri } from '@/shared/native/files';
 import { colors, radius, touch } from '@/shared/ui/theme';
 import { ZoomableView } from '@/shared/ui/ZoomableView';
+import type { Court } from '@/sports/tennis';
 
 import { PlaybackPanel } from './components/PlaybackPanel';
 
@@ -17,22 +19,32 @@ const START_BEFORE_END_SECONDS = 1;
 /** A jump to a sound peak lands this long before it */
 const PEAK_LEAD_SECONDS = 0.15;
 
+export type VideoOrientation = 'portrait' | 'landscape';
+
 /**
  * Plays one point: one file almost always. When a point has several files they are stacked, all loaded, and only the active one is visible, so switching files needs no reload
  */
 export function ClipPlayer({
   segments,
   fps,
+  court,
   header,
   footer,
+  onVideoOrientation,
   onClose,
 }: {
   segments: readonly Segment[];
   fps: number;
+  /** The court of the session: the ball tracking takes its settings from it */
+  court: Court;
   header: ReactNode;
   footer: ReactNode;
+  /** How the point was filmed, once its video is loaded: the screen turns to match it */
+  onVideoOrientation: (orientation: VideoOrientation) => void;
   onClose: () => void;
 }) {
+  const window = useWindowDimensions();
+  const portrait = window.height > window.width;
   const timeline = useMemo(() => buildTimeline(segments), [segments]);
   const initial = useMemo(() => {
     const t = Math.max(0, timeline.totalS - START_BEFORE_END_SECONDS);
@@ -47,6 +59,7 @@ export function ClipPlayer({
   const [rate, setRate] = useState<number>(DEFAULT_RATE);
   const [timeS, setTimeS] = useState(initial.t);
   const peaks = useSoundPeaks(timeline);
+  const ball = useBallTrack(timeline, timeS, court);
 
   const setTime = (t: number) => {
     timeRef.current = t;
@@ -105,6 +118,13 @@ export function ClipPlayer({
     </Pressable>
   );
 
+  const top = (
+    <View style={styles.top}>
+      {back}
+      {header}
+    </View>
+  );
+
   if (timeline.segments.length === 0) {
     return (
       <SafeAreaView style={styles.empty}>
@@ -116,7 +136,7 @@ export function ClipPlayer({
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, portrait && styles.containerPortrait]}>
       <View style={styles.stage}>
         <ZoomableView>
           {timeline.segments.map((segment, index) => (
@@ -136,8 +156,9 @@ export function ClipPlayer({
               ignoreSilentSwitch="ignore"
               repeat={false}
               progressUpdateInterval={33}
-              onLoad={() => {
+              onLoad={(e) => {
                 if (index !== initial.index) return;
+                onVideoOrientation(e.naturalSize.orientation);
                 // Already on the right frame: no seek, so no onSeek event to wait for
                 if (initial.localS < 1 / fps) onInitialSeekDone();
                 else videoRefs.current[index]?.seek(initial.localS, 0);
@@ -151,15 +172,32 @@ export function ClipPlayer({
               onEnd={() => onSegmentEnd(index)}
             />
           ))}
+          {ball.on && ball.video && (
+            <BallTrackOverlay points={ball.points} video={ball.video} timeS={timeS} />
+          )}
         </ZoomableView>
 
-        <SafeAreaView style={styles.topBar} edges={['top', 'left']} pointerEvents="box-none">
-          {back}
-          <View style={styles.badge}>{header}</View>
-        </SafeAreaView>
+        {ball.on && ball.frame && (
+          <SafeAreaView
+            style={[styles.hud, portrait && styles.hudPortrait]}
+            edges={portrait ? ['top'] : ['bottom', 'left']}
+            pointerEvents="none"
+          >
+            <BallHud
+              points={ball.points}
+              timeS={timeS}
+              frame={ball.frame}
+              frames={ball.frames}
+              seen={ball.seen}
+              extra={`${ball.ms.toFixed(0)} ms / image   trajectoire ${ball.trackMs.toFixed(0)} ms`}
+            />
+          </SafeAreaView>
+        )}
       </View>
 
       <PlaybackPanel
+        portrait={portrait}
+        header={top}
         timeS={timeS}
         totalS={timeline.totalS}
         rate={rate}
@@ -170,6 +208,8 @@ export function ClipPlayer({
         peaks={peaks}
         onJumpToPeak={jumpToPeak}
         onSeek={pauseAt}
+        ball={ball}
+        onTrackBall={ball.toggle}
         footer={footer}
       />
     </View>
@@ -186,10 +226,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#000',
   },
+  containerPortrait: { flexDirection: 'column' },
+  /** The video alone: every control is in the panel, nothing hides the ball */
   stage: { flex: 1 },
   hidden: { opacity: 0 },
-  topBar: { position: 'absolute', top: 0, left: 0, maxWidth: 420, padding: 16, gap: 12 },
-  badge: { backgroundColor: 'rgba(17,17,17,0.75)', padding: 12, borderRadius: radius },
+  /** Top of the video in portrait (the panel is below it), bottom left in landscape */
+  hud: { position: 'absolute', bottom: 0, left: 0, padding: 8 },
+  hudPortrait: { top: 0, bottom: undefined },
+  top: { gap: 12 },
   close: {
     alignSelf: 'flex-start',
     borderWidth: 2,
@@ -198,7 +242,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     minHeight: touch,
     justifyContent: 'center',
-    backgroundColor: 'rgba(17,17,17,0.75)',
   },
   closeText: { color: colors.line, fontSize: 18, fontWeight: '700' },
   empty: {

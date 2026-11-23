@@ -4,8 +4,7 @@ import { isValid, type LoggedEvent, type MatchEvent, replayLog } from './matchLo
 
 /**
  * The host's side of the protocol: the one log of the session. Every change, the host's own as
- * its guests' intents, takes the same path: checked against the latest log, then numbered. The
- * caller sends the numbered event to every guest.
+ * its guests' intents, takes the same path: checked against the latest log, then numbered
  */
 export class HostLog {
   private log: LoggedEvent[] = [];
@@ -16,7 +15,7 @@ export class HostLog {
     return this.log;
   }
 
-  /** The event, numbered and added to the log; null when it changes nothing (stale, invalid). */
+  /** The event, numbered and added to the log; null when it changes nothing (stale, invalid) */
   receive(event: MatchEvent): LoggedEvent | null {
     if (!isValid(replayLog(this.setup, this.log), event)) return null;
     const logged = { ...event, seq: this.log.length + 1 } as LoggedEvent;

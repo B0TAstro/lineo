@@ -46,7 +46,8 @@ iOS **et** Android, et une session doit fonctionner avec un iPhone et un Android
 | Lecture vidéo | react-native-video |
 | Gestes, zoom | react-native-gesture-handler, react-native-reanimated |
 | Voix | react-native-vosk + `vosk-model-small-fr-0.22`, grammaire contrainte |
-| Liaison | Bluetooth Low Energy en priorité (lib candidate : `munim-bluetooth`), Wi-Fi local en secours |
+| Liaison | Bluetooth Low Energy en priorité (`munim-bluetooth`), Wi-Fi local en secours |
+| Chiffrement | `@noble/ciphers` (XChaCha20-Poly1305), `expo-crypto` pour la clé de session |
 | Vision | `react-native-fast-opencv` pour les pixels, maths en TypeScript |
 | Tests | Jest (jest-expo) |
 | CI | GitHub Actions |
@@ -55,11 +56,11 @@ Les libs marquées « candidate » ou non encore testées sur Android doivent ê
 
 ## Architecture
 
-Schémas (Mermaid, affichés par GitHub) : `docs/architecture.md`, `docs/parcours.md` et `docs/synchro.md` (voix et VAR entre téléphones). Les PNG pour les slides sont dans `docs/images/`, regénérés par `npm run docs:images` (ou `npm run docs:images -- architecture` pour un seul) : on modifie le `.md`, jamais l'image.
+Schémas (Mermaid, affichés par GitHub) : `docs/architecture.md`, `docs/parcours.md`, `docs/synchro.md` (voix et VAR entre téléphones) et `docs/tracking.md` (suivi de balle dans le replay, en 4 étapes). Un seul schéma Mermaid par fichier : le script en fait une image. Les PNG pour les slides sont dans `docs/images/`, regénérés par `npm run docs:images` (ou `npm run docs:images -- architecture` pour un seul) : on modifie le `.md`, jamais l'image.
 
 ```
 models/         modèle Vosk (téléchargé par `npm run setup:model`, jamais commité)
-modules/        modules natifs locaux (sound-levels : niveau sonore d'un clip, pour les pics du replay)
+modules/        modules natifs locaux (sound-levels : niveau sonore d'un clip, pour les pics du replay ; clip-frames : images d'un clip, pour le suivi de balle)
 assets/         icon/ (icône, splash) et images/ (images de l'interface) uniquement
 src/
 ├── app/        routes expo-router, minces : elles lisent leurs paramètres et affichent un écran
@@ -68,6 +69,7 @@ src/
 │   ├── recording/    un fichier par point : file des clips, enregistreur, caméra du match
 │   ├── replay/       VAR : lecteur, panneau de lecture, décisions des joueurs
 │   ├── sound-peaks/  pics sonores d'un clip (resserviront au rebond, v0.9)
+│   ├── ball-tracking/ balle suivie dans le replay (OpenCV + Kalman)
 │   ├── voice/        annonce du serveur → score (Vosk)
 │   ├── score/        affichage du score
 │   └── match/        l'écran de match, qui assemble les autres
@@ -193,6 +195,34 @@ Ce qui est en place en v0.3 :
 - On peut aussi **fermer le replay sans rien changer** au score.
 - Avec la lecture assistée (v0.9), le replay peut afficher une **suggestion chiffrée** (« 80 % sûr que la balle est sortie »), jamais un avis tranché ni un bouton qui l'applique.
 
+## Balle suivie (v0.5)
+
+Portage du POC 1 (`temoin-poc-cv-tracking`, tag `poc1-ball-tracking`), dans `features/ball-tracking`.
+
+- **Interrupteur « Tracking »** dans le replay : allumé, `ReplayBallTracker` lit les images autour du temps à l'écran, de 1,5 s avant à 1,5 s après, et calcule la trajectoire **sur toutes ces images à la fois** : un replay est un fichier, la suite d'une image est connue autant que ce qui la précède. Ce qui a été lu est gardé (8 s au plus) : reculer image par image, mettre en pause ou rejouer dedans ne relit rien et ne change pas la trajectoire. Le lecteur ne va qu'en avant : revenir avant ce qui a été lu repart 1,5 s plus tôt ; plus de 0,5 s de retard (saut en avant, lecture plus rapide que l'analyse) repart 0,2 s avant le temps à l'écran. Rien ne tourne éteint, ni pendant qu'on filme.
+- **Ralentir n'aide pas la détection** : les images sont les mêmes à toutes les vitesses (taille et flou de la balle fixés au tournage). Le ralenti laisse seulement plus de temps de calcul par image affichée. Ce qui aide : filmer à haute cadence, une balle plus grosse en pixels, du contraste.
+- **Images** : `modules/clip-frames` (AVAssetReader en BGRA sur iOS, MediaExtractor + MediaCodec en YUV sur Android) lit le fichier en avant, une image à la fois, en **1280 px** de côté long (une balle au fond du court ne fait que 3 à 10 px, la réduire à 640 la perd), redressée selon la rotation du fichier, en RGB compact (`ArrayBuffer`).
+- **Pixels** : `react-native-fast-opencv` 1.0.1 (`native/OpenCvDetector.ts`, seul fichier qui l'importe). Sur un court, la balle fait quelques pixels parmi les gradins, les vêtements, les chaussures et les ombres. Ce qui la distingue dans une image, c'est qu'elle **passe** : à sa place, l'image est plus claire et plus jaune qu'un instant avant et qu'un instant après. Sur les pixels tels que filmés (un flou efface une balle de 2 px) :
+  1. chaque image est comparée à celles 30 ms avant et 30 ms après (`logic/framesToCompare.ts` : 2 images d'écart à 60 i/s, 1 à 30) : plus claire que les deux d'au moins 25 niveaux de gris ET plus jaune que les deux (`min(rouge, vert) - bleu`, au moins 4). Une ombre qui arrive est plus sombre, une ombre qui part reste claire, un maillot est encore là l'image d'après. La réponse pour une image arrive donc 1 ou 2 images plus tard ;
+  2. pas plus rouge que verte (rouge - vert ≤ 10) : un bras ou une jambe passe aussi, mais la peau est rouge avant d'être verte ;
+  3. taches de 2 px à 3 % de la largeur, dans une petite zone de mouvement (≤ 4 % de la largeur, différence de gris flouté avec l'image d'avant, seuil 20, dilatée) : une personne qui bouge fait une grande zone (`logic/candidates.ts`, `ballBlobs`). Une image identique à la précédente (enregistrement d'écran) est sautée.
+  - Pas de couleur absolue : la version précédente exigeait un jaune HSV `[25, 50, 140]` → `[45, 255, 255]`. Mesuré sur la vidéo de référence : au fond du court, la balle de 2 px se mélange au mur sombre et sort de cette plage de 2 unités (teinte 47, saturation 50) alors que son mouvement est net (40 à 70 niveaux de gris). La couleur d'une vidéo est stockée à demi-résolution : à cette taille, c'est la luminosité qui porte l'information.
+  - iOS : patch `patches/react-native-fast-opencv+1.0.1.patch` (repris de la PR #119 du dépôt, non fusionnée) : la lib s'installait par l'ancien pont (`RCTCxxBridge`), supprimé depuis RN 0.87. Elle passe par `RCTTurboModuleWithJSIBindings`.
+  - Android : OpenCV 4.12 (Maven), environ 23,5 Mo non compressés par architecture. iOS : OpenCV 4.9.
+- **Suivi dans le replay** (`logic/trackClip.ts`, TS pur), d'après le tracker de balle de tennis de Yan, Christmas et Kittler (BMVC 2005). Une image seule ne distingue pas la balle des autres taches ; ce qui la distingue, c'est que ses taches s'alignent sur une parabole, image après image :
+  - `withoutResidents`, avant tout : la caméra ne bouge pas pendant un point, donc une tache entourée d'autres taches à moins de 1,2 % de la largeur sur 40 % des images d'une fenêtre de 1,5 s habite là (un pied, une feuille, un spectateur). La balle, elle, ne fait que passer ;
+  - `findArcs` : trois taches proches dans le temps et à peu près alignées donnent une parabole (x et y quadratiques dans le temps, moindres carrés, `fitQuadratic`). Elle ramasse les taches proches d'elle (0,4 % de la largeur), un peu plus loin à chaque passe, et est réajustée jusqu'à ne plus rien trouver. Un rebond ou une frappe casse la parabole : l'arc s'arrête là, un autre commence ;
+  - un arc est gardé s'il passe par 6 taches au moins, sur 30 % de ses images, s'il voyage (une tache qui scintille sur place ne voyage pas) et s'il se courbe vers le bas (une balle en vol tombe ; une chaussure jaune qui glisse le long de la ligne de fond va tout droit, un pied qui se lève se courbe un peu vers le haut). Seule la perspective courbe un vol vers le haut, et alors fortement (balle rapide au-dessus de la caméra, près d'elle) : accepté au-delà de 0,8 % de la largeur ;
+  - `linkArcs` : il n'y a qu'une balle. La trajectoire est la chaîne d'arcs vue sur le plus d'images, où chaque arc commence là où le précédent a pu amener la balle (programmation dynamique). Deux arcs qui se chevauchent sont coupés là où ils se croisent : c'est la frappe ou le rebond ;
+  - position, vitesse et accélération sont lues sur l'arc : justes dès la première image après un rebond. « Prédite » = la balle n'a pas été détectée sur cette image, l'arc passe quand même par là. Seuils en largeurs d'image et en secondes : ils tiennent à toute résolution et toute cadence.
+- **Suivi live** (`logic/BallTracker.ts`, dev seulement) : le tracker image par image du POC (Kalman 4 états à vitesse constante, une seule piste, la tache la plus proche dans une porte autour de la prédiction). Il ne connaît pas la suite d'une image : sur un vrai court il part sur les faux candidats. Gardé pour régler la couleur et les tailles sur le court, pas pour suivre.
+- **Réglages** (`logic/ballConfig.ts`), mesurés hors de l'app sur `dev-videos/` (matchs filmés depuis le fond du court). Ceux du POC (`ball.yaml`) n'étaient pas calibrés (le fichier le dit) et visaient une balle à 30 cm d'une webcam : aire ≥ 150 px², ils ne trouvaient la balle sur aucune image. Vidéo de référence : 10 s d'un vrai échange filmé du fond du court, 1280 px, environ 30 i/s. Images où la balle est montrée, sur 298 : tracker image par image du POC 291, presque toujours sur les chaussures jaunes du joueur du fond ; arcs sur tout le clip avec le détecteur HSV 129, dont environ 7 sur 10 sur la balle ; arcs avec le détecteur actuel 167, dont environ 9 sur 10 sur la balle (32 images vérifiées à l'œil : 29 sur la balle, 2 près des pieds du joueur, 1 décalée). Le détecteur trouve 1,3 tache par image au lieu de 3. Ce qui limite maintenant : la balle contre un joueur (au moment de la frappe) et une seule vidéo de référence, qui n'est pas filmée par l'app.
+- **Affichage**, comme le POC : traîne des 32 dernières positions (plus épaisse et plus vive vers maintenant, coupée quand la piste est perdue), cercle au rayon de la balle (jaune vue, orange prédite) et son centre, flèche rouge de vitesse (longueur = vitesse × 0,15), et le bandeau : résolution, % de balle vue, état, images sans détection, position, rayon, vitesse et norme, accélération. Le calque est dans `ZoomableView`, il zoome avec la vidéo ; la position suit le letterbox de `contain`. Aucun dedans / dehors.
+- **Réglages par terrain** (`logic/ballConfigFor.ts`) : à la création de la session, l'hôte indique le lieu (intérieur, extérieur) et la surface (gazon, dur, terre battue) : `Court` dans `sports/tennis`, rangé dans `SetupForm`. Il voyage avec les réglages du match (paramètre de route chez l'hôte, « snapshot » chez les invités), pas dans le journal : chaque téléphone détecte seul, avec le même terrain. `ballConfigFor(court)` donne les réglages de base (`BALL_CONFIG`), puis ce que le lieu change, puis ce que la surface change (`COURT_SETTINGS`). **Règle : un écart n'entre dans `COURT_SETTINGS` que mesuré sur une vidéo de ce terrain.** Aujourd'hui la table est vide : la seule vidéo de référence est un court en dur en extérieur, tous les terrains ont donc les réglages de base. À mesurer en premier (calculs sur des couleurs typiques, pas des mesures) : sur terre battue, le test « pas plus rouge que vert » (`maxRedOverGreen`) écarte probablement la balle de 2 à 3 px près du sol, mélangée à l'orange ; en intérieur, `brighterBy` est probablement trop strict (moins de lumière, balle plus floue). Une balle devant le ciel n'est pas « plus claire qu'avant et après » : ça demande de changer le détecteur, pas un réglage. Un invité dont l'hôte a un build plus ancien ne reçoit pas de terrain : il prend celui par défaut (`completeForm`). L'écran de création actuel a deux choix de plus ; l'assistant en 3 étapes de la maquette n'est pas fait.
+- **Vidéos test (dev seulement)** : `npm run dev:videos` copie des vidéos de vrais matchs (par défaut `dev-videos/`, ignoré par git : vidéos filmées depuis le fond du court, en 720p) dans `Documents/dev-videos` de l'app sur l'iPhone branché (`xcrun devicectl`, iOS seulement), avec un `index.json` (durée et fps lus par `ffprobe`). Rien n'entre dans le build. Dans le replay, « Vidéos test » remplace les points du match par ces vidéos, sans les boutons de décision : on teste le suivi sans filmer un match.
+- **Balle live (dev seulement)** : bouton « Balle live » dans les stats dev de l'écran du score. La sortie d'images de la caméra (demandée en 640×360, `VGA_16_9` ; l'iPhone 12 la donne en 1280×720, c'est la taille affichée dans le bandeau) passe en RGB redressé, et une image à la fois part au JS (`useMatchCamera(onCameraFrame)`, drapeau `createSynchronizable` : la suivante n'est envoyée qu'une fois la précédente traitée). Même détecteur que le replay, tracker image par image (`BallTracker`), anneau et traîne sur l'aperçu caméra, temps par image affiché. Sert à régler la couleur et les tailles sur le court ; jamais dans un build de release.
+- **À vérifier sur un vrai court** : temps par image en 1280 px et temps du calcul de trajectoire sur les deux téléphones (affichés dans le bandeau ; le calcul de trajectoire tourne sur le thread JS, toutes les 30 images lues ; à ×0,5, une vidéo à 60 i/s demande moins de 33 ms par image, sinon l'analyse prend du retard et repart juste avant le temps à l'écran) ; seuils de luminosité et de jaune au soleil, à l'ombre et le soir, à 60 i/s (la vidéo de référence est à 30) ; balle au fond du court ; alignement du calque en image par image (rotation du fichier, caméra avant).
+
 ## Lecture assistée (v0.5, v0.7 à v0.9)
 
 Tourne **uniquement sur le point demandé**, jamais en continu.
@@ -223,6 +253,7 @@ npm test
 npm run typecheck
 npm run lint
 npm run format:check
+npm run dev:videos           # dev : copie des vidéos de test sur l'iPhone (replay → « Vidéos test »)
 
 # Release : passer "version" de app.json et package.json à X.Y.Z, merger sur main.
 # Android : la CI voit une version sans tag, construit l'APK, crée le tag et la release.
