@@ -38,8 +38,13 @@ export const fonts = {
 /** The 5 text styles of the design system */
 export const type = {
   score: { fontFamily: fonts.thin, fontSize: 160, fontVariant: ['tabular-nums'] },
-  title: { fontFamily: fonts.light, fontSize: 32 },
+  title: { fontFamily: fonts.light, fontSize: 32, letterSpacing: -0.64 },
   button: { fontFamily: fonts.medium, fontSize: 20 },
   body: { fontFamily: fonts.light, fontSize: 16 },
-  section: { fontFamily: fonts.medium, fontSize: 13, textTransform: 'uppercase' },
+  section: {
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    letterSpacing: 1.3,
+    textTransform: 'uppercase',
+  },
 } as const satisfies Record<string, TextStyle>;

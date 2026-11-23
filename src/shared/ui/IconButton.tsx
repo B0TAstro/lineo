@@ -7,10 +7,13 @@ import { colors, radius } from './theme';
 export function IconButton({
   icon,
   label,
+  plain,
   onPress,
 }: {
   icon: IconName;
   label: string;
+  /** No background: back and close at the top of a screen */
+  plain?: boolean;
   onPress: () => void;
 }) {
   return (
@@ -19,7 +22,7 @@ export function IconButton({
       accessibilityRole="button"
       accessibilityLabel={label}
       hitSlop={8}
-      style={({ pressed }) => [styles.tool, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.tool, plain && styles.plain, pressed && styles.pressed]}
     >
       <Icon name={icon} />
     </Pressable>
@@ -35,5 +38,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  plain: { width: 44, height: 44, backgroundColor: 'transparent' },
   pressed: { opacity: 0.5 },
 });

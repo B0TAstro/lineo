@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, type ViewStyle } from 'react-native';
 
 import { borderWidth, colors, fonts, radius } from './theme';
 
@@ -6,20 +6,33 @@ import { borderWidth, colors, fonts, radius } from './theme';
 export function Chip({
   label,
   selected,
+  compact,
   onPress,
+  style,
 }: {
   label: string;
   selected: boolean;
+  /** Three chips in a row: smaller text */
+  compact?: boolean;
   onPress: () => void;
+  style?: ViewStyle;
 }) {
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityState={{ selected }}
-      style={({ pressed }) => [styles.chip, selected && styles.on, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.chip,
+        selected && styles.on,
+        pressed && styles.pressed,
+        style,
+      ]}
     >
-      <Text style={[styles.label, selected && styles.labelOn]} numberOfLines={1}>
+      <Text
+        style={[styles.label, compact && styles.labelCompact, selected && styles.labelOn]}
+        numberOfLines={1}
+      >
         {label}
       </Text>
     </Pressable>
@@ -30,7 +43,7 @@ const styles = StyleSheet.create({
   chip: {
     flex: 1,
     height: 56,
-    paddingHorizontal: 24,
+    paddingHorizontal: 8,
     borderRadius: radius,
     borderWidth,
     borderColor: colors.border,
@@ -40,5 +53,6 @@ const styles = StyleSheet.create({
   on: { backgroundColor: colors.text, borderColor: colors.text },
   pressed: { opacity: 0.6 },
   label: { fontFamily: fonts.regular, fontSize: 18, color: colors.text },
+  labelCompact: { fontSize: 16 },
   labelOn: { fontFamily: fonts.medium, color: colors.onAccent },
 });

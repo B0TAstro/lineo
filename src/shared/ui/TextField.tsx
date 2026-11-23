@@ -1,8 +1,8 @@
 import { StyleSheet, TextInput, type TextInputProps } from 'react-native';
 
-import { borderWidth, colors, fonts, radius, touch } from './theme';
+import { borderWidth, colors, fonts, radius } from './theme';
 
-/** A text field, 64 pt high */
+/** A text field, 56 pt high as in every screen of the mockup */
 export function TextField(props: TextInputProps) {
   return (
     <TextInput
@@ -16,7 +16,7 @@ export function TextField(props: TextInputProps) {
 
 const styles = StyleSheet.create({
   field: {
-    height: touch,
+    height: 56,
     paddingHorizontal: 20,
     borderRadius: radius,
     borderWidth,

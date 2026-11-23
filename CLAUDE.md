@@ -63,7 +63,7 @@ Schémas (Mermaid, affichés par GitHub) : `docs/architecture.md`, `docs/parcour
 ```
 models/         modèle Vosk (téléchargé par `npm run setup:model`, jamais commité)
 modules/        modules natifs locaux (sound-levels : niveau sonore d'un clip, pour les pics du replay ; clip-frames : images d'un clip, pour le suivi de balle)
-assets/         images/ (icône d'app et splash, noms et dossier par défaut d'Expo), logo/ (`lineo-full` : le nom avec la balle, `lineo-symbol` : la balle seule ; SVG + PNG, exports Figma) et icons/ (icônes du design system en SVG, leur blanc est `currentColor`)
+assets/         images/ (icône d'app et splash aux noms par défaut d'Expo, images de l'interface comme le coin du viseur), logo/ (`lineo-full` : le nom avec la balle, `lineo-symbol` : la balle seule ; SVG + PNG, exports Figma) et icons/ (icônes du design system en SVG, leur blanc est `currentColor`)
 src/
 ├── app/        routes expo-router, minces : elles lisent leurs paramètres et affichent un écran
 ├── features/   une fonctionnalité = un dossier complet, entrée par son index.ts
@@ -78,7 +78,7 @@ src/
 ├── sports/
 │   └── tennis/       ce qui change d'un sport à l'autre : machine à états du score, libellés, annonces, format du match
 └── shared/     ce qui ne connaît aucun métier
-    ├── ui/           design system (voir `docs/design.md`) : theme, Icon, Logo, Button, Chip, TextField, StatusDot, ServeDot, IconButton…
+    ├── ui/           design system (voir `docs/design.md`) : theme, Icon, Logo, Button, Chip, TextField, ScreenTitle, StatusDot, ServeDot, IconButton…
     ├── lib/          TS pur : base64url
     └── native/       files, random
 ```

@@ -148,6 +148,7 @@ export function MatchScreen({ session }: { session: MatchSession }) {
         <InviteOverlay
           sessionId={session.sessionId}
           sessionKey={session.key}
+          phones={session.role === 'host' ? session.guests + 1 : 1}
           onClose={() => setShowQr(false)}
         />
       )}
