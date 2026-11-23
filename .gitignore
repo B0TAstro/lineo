@@ -14,7 +14,8 @@ expo-env.d.ts
 # Vosk model (downloaded by `npm run setup:model`)
 models/
 
-# Recorded clips and test videos
+# Recorded clips and test videos (dev-videos/: npm run dev:videos)
+dev-videos/
 *.mov
 *.mp4
 !docs/**/*.mp4

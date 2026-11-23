@@ -94,13 +94,7 @@ export function PlaybackPanel({
         {/* Tools: the loud sounds (hits, bounces) and the ball */}
         <View style={styles.row}>
           {peaks.length > 0 && <ControlButton label="◀ Son" onPress={() => onJumpToPeak(-1)} />}
-          <ControlButton
-            label={
-              ball.status === 'running' ? `Balle ${Math.round(ball.progress * 100)} %` : 'Balle'
-            }
-            selected={ball.status === 'done'}
-            onPress={onTrackBall}
-          />
+          <ControlButton label="Tracking" selected={ball.on} onPress={onTrackBall} />
           {peaks.length > 0 && <ControlButton label="Son ▶" onPress={() => onJumpToPeak(1)} />}
         </View>
         {ballLine(ball) !== undefined && <Text style={styles.ballLine}>{ballLine(ball)}</Text>}
@@ -110,16 +104,11 @@ export function PlaybackPanel({
   );
 }
 
-/** Fewer frames than this with the ball seen, and the path says more about noise than the ball. */
-const RARELY_SEEN = 0.2;
-
-/** What the ball analysis found, in plain words: never more than it saw. */
+/** What the tracking has seen so far, in plain words: never more than it saw. */
 function ballLine(ball: BallTrackState): string | undefined {
-  if (ball.status === 'error') return 'Analyse impossible sur ce clip.';
-  if (ball.status !== 'done') return undefined;
-  if (ball.frames === 0 || ball.seen / ball.frames < RARELY_SEEN)
-    return 'Balle peu visible sur ce moment.';
-  return `Balle vue sur ${ball.seen} / ${ball.frames} images du point.`;
+  if (ball.error) return 'Tracking impossible sur ce clip.';
+  if (!ball.on || ball.frames === 0) return undefined;
+  return `Balle vue sur ${ball.seen} / ${ball.frames} images.`;
 }
 
 const styles = StyleSheet.create({

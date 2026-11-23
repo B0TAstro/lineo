@@ -15,6 +15,9 @@ const add = (a: Matrix, b: Matrix): Matrix =>
 
 const at = (m: Matrix, i: number, j: number) => m[i]?.[j] ?? 0;
 
+/** The time step the process noise is given for: one frame at 60 fps. */
+const NOISE_STEP_S = 1 / 60;
+
 /**
  * Constant-velocity Kalman filter on [x, y, vx, vy], written out instead of cv2.KalmanFilter (POC's
  * tracking.py): positions in pixels, velocities in pixels per second, the real time step at every
@@ -23,19 +26,31 @@ const at = (m: Matrix, i: number, j: number) => m[i]?.[j] ?? 0;
 export class Kalman {
   /** State [x, y, vx, vy], as a column. */
   private state: Matrix;
-  private covariance = identity(4);
-  private readonly processNoise: Matrix;
+  private covariance: Matrix;
   private readonly measurementNoise: Matrix;
 
-  constructor(x: number, y: number, processNoise: number, measurementNoise: number) {
-    // Starts still, like the POC: the first frames teach it the speed.
-    this.state = [[x], [y], [0], [0]];
-    this.processNoise = identity(4, processNoise);
+  /**
+   * Starts at the speed seen between the two frames that started the track: a ball is never
+   * still, and starting at zero (as the POC) made the first predictions miss a fast ball.
+   */
+  constructor(
+    start: { x: number; y: number; vx: number; vy: number },
+    private readonly processNoise: number,
+    measurementNoise: number,
+    initialCovariance: number,
+  ) {
+    this.state = [[start.x], [start.y], [start.vx], [start.vy]];
+    this.covariance = identity(4, initialCovariance);
     this.measurementNoise = identity(2, measurementNoise);
   }
 
   get position() {
     return { x: at(this.state, 0, 0), y: at(this.state, 1, 0) };
+  }
+
+  /** Pixels per second. */
+  get speed() {
+    return Math.hypot(at(this.state, 2, 0), at(this.state, 3, 0));
   }
 
   /** Moves the state on by `dt` seconds and returns where the ball should be. */
@@ -47,9 +62,11 @@ export class Kalman {
       [0, 0, 0, 1],
     ];
     this.state = multiply(transition, this.state);
+    // A longer step (a 25 fps video, a skipped frame) leaves more room for the ball to turn
+    const noise = identity(4, this.processNoise * Math.max(1, dt / NOISE_STEP_S));
     this.covariance = add(
       multiply(multiply(transition, this.covariance), transpose(transition)),
-      this.processNoise,
+      noise,
     );
     return this.position;
   }

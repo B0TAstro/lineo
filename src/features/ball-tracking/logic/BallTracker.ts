@@ -1,5 +1,5 @@
 import type { BallConfig } from './ballConfig';
-import { type Candidate, isPlausible, selectBest } from './candidates';
+import { type Candidate, nearest, startPair } from './candidates';
 import { finiteDifference, type Sample } from './derivatives';
 import { Kalman } from './Kalman';
 
@@ -28,54 +28,75 @@ export type TrackedBall = {
 const MIN_DT = 1e-4;
 
 /**
- * Follows the ball from frame to frame (POC's tracking.py): picks the best candidate near the
- * prediction, smooths it with the Kalman filter, coasts on the prediction for a few frames when
- * the ball is missing, then drops the track. Velocity and acceleration come from the history of
- * filtered positions, by least squares over the last few samples, not from the filter's state.
+ * Follows the ball from frame to frame. Built on the POC's tracking.py (Kalman filter, coasting on
+ * the prediction for a few frames, velocity and acceleration by least squares over the filtered
+ * positions), with what a real court needs on top:
+ * - a track starts only on two blobs one frame apart that moved a little, at their speed;
+ * - only a blob within a gate around the prediction continues it, the nearest one;
+ * - a track that stops moving is dropped: a ball in play is never still for long.
  */
 export class BallTracker {
   private filter: Kalman | null = null;
-  private lastT = 0;
+  private lastT: number | undefined;
+  private previous: readonly Candidate[] = [];
   private missed = 0;
+  private slow = 0;
   private radius = 0;
   private history: Sample[] = [];
   private velocities: Sample[] = [];
-  private readonly diagonal: number;
 
   constructor(
     private readonly config: BallConfig,
-    frame: { width: number; height: number },
-  ) {
-    this.diagonal = Math.hypot(frame.width, frame.height);
-  }
+    private readonly frame: { width: number; height: number },
+  ) {}
 
   /** One frame: where the ball is, or nothing when there is no track. */
   step(t: number, candidates: readonly Candidate[]): TrackedBall | undefined {
-    const plausible = candidates.filter((c) => isPlausible(c, this.config));
-    const predicted = this.filter?.predict(Math.max(MIN_DT, t - this.lastT));
-    const best = selectBest(plausible, predicted, this.diagonal, this.config.weights);
+    const { config } = this;
+    const width = this.frame.width;
+    const dt = Math.max(MIN_DT, t - (this.lastT ?? t));
+    let seen: Candidate | undefined;
 
-    if (best) {
-      if (this.filter) this.filter.correct(best.x, best.y);
-      else
-        this.filter = new Kalman(
-          best.x,
-          best.y,
-          this.config.processNoise,
-          this.config.measurementNoise,
-        );
-      this.missed = 0;
-      this.radius = best.r;
-    } else {
-      if (!this.filter) return undefined;
-      if (++this.missed > this.config.maxMissedFrames) {
+    if (this.filter) {
+      const predicted = this.filter.predict(dt);
+      const gate = config.gate * width * (1 + this.missed * config.gateGrowth);
+      seen = nearest(candidates, predicted, gate);
+      if (seen) {
+        this.filter.correct(seen.x, seen.y);
+        this.missed = 0;
+      } else if (++this.missed > config.maxMissedFrames) {
         this.reset();
-        return undefined;
+      }
+      if (this.filter) {
+        this.slow = this.filter.speed < config.minSpeed * width ? this.slow + 1 : 0;
+        if (this.slow >= config.slowFrames) this.reset();
       }
     }
 
+    if (!this.filter && this.lastT !== undefined) {
+      const pair = startPair(
+        candidates,
+        this.previous,
+        config.minStartMove * width,
+        config.maxStartMove * width,
+      );
+      if (pair) {
+        const { from, to } = pair;
+        this.filter = new Kalman(
+          { x: to.x, y: to.y, vx: (to.x - from.x) / dt, vy: (to.y - from.y) / dt },
+          config.processNoise,
+          config.measurementNoise,
+          config.initialCovariance,
+        );
+        seen = to;
+      }
+    }
+
+    this.previous = candidates;
     this.lastT = t;
-    return this.record(t, best ? 'detected' : 'predicted');
+    if (!this.filter) return undefined;
+    if (seen) this.radius = seen.r;
+    return this.record(t, seen ? 'detected' : 'predicted');
   }
 
   /** Appends the filtered position, and the velocity it implies (POC's `_record`). */
@@ -103,6 +124,7 @@ export class BallTracker {
   private reset() {
     this.filter = null;
     this.missed = 0;
+    this.slow = 0;
     this.history = [];
     this.velocities = [];
   }

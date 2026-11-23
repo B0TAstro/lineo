@@ -1,16 +1,17 @@
 import {
+  BorderTypes,
   ColorConversionCodes,
   ContourApproximationModes,
   DataTypes,
   type Mat,
   MorphShapes,
-  MorphTypes,
   OpenCV,
   RetrievalModes,
+  ThresholdTypes,
 } from 'react-native-fast-opencv';
 
 import type { BallConfig } from '../logic/ballConfig';
-import { type Candidate, circularity } from '../logic/candidates';
+import type { Candidate } from '../logic/candidates';
 
 /**
  * One frame as it comes from the clip reader (packed RGB) or the live camera (BGRA or RGBA).
@@ -23,79 +24,120 @@ export type RawImage = {
   format: 'rgb' | 'bgra' | 'rgba';
 };
 
-/** Finds the blobs of ball colour in one frame. */
-export type DetectCandidates = (image: RawImage) => Candidate[];
+/**
+ * Finds the blobs that could be the ball, frame after frame: it compares each frame with the one
+ * before, so frames must come in order, and `reset` after a jump.
+ */
+export type BallDetector = {
+  /** The candidates, or undefined when the frame repeats the previous one (nothing new to see). */
+  detect(image: RawImage): Candidate[] | undefined;
+  reset(): void;
+};
+
+type Box = { x: number; y: number; width: number; height: number };
 
 /**
- * The POC's pixel chain on OpenCV: blur, HSV, colour threshold, open then close, outer contours.
- * Only the contours' measures come back to JS; filtering and choosing stay in `logic/`.
- *
- * react-native-fast-opencv has no minEnclosingCircle: the bounding box gives the centre, and its
- * longer side the diameter.
+ * On a court the ball is a few pixels among yellow stands, clothes and lights, and colour alone
+ * finds all of them. The ball is what is bright yellow, moving, and moving on its own:
+ * 1. blur, then the grey difference with the previous frame: what moved;
+ * 2. the moving areas, each kept only if small: a person moving makes a large one;
+ * 3. bright yellow (HSV) AND moving, its blobs, each kept if ball-sized and inside a small moving
+ *    area.
+ * Only boxes come back to JS; choosing the ball stays in `logic/`.
  */
-export function createOpenCvDetector(config: BallConfig): DetectCandidates {
-  const openKernel = OpenCV.getStructuringElement(
+export function createOpenCvDetector(config: BallConfig): BallDetector {
+  const dilateKernel = OpenCV.getStructuringElement(
     MorphShapes.MORPH_ELLIPSE,
-    OpenCV.Size.create(config.openSize, config.openSize),
+    OpenCV.Size.create(config.motionDilate, config.motionDilate),
   );
-  const closeKernel = OpenCV.getStructuringElement(
-    MorphShapes.MORPH_ELLIPSE,
-    OpenCV.Size.create(config.closeSize, config.closeSize),
-  );
+  const anchor = OpenCV.Point.create(-1, -1);
+  const border = OpenCV.Scalar.create(0);
   const blurSize = OpenCV.Size.create(config.blurSize, config.blurSize);
   const ranges = config.hsvRanges.map(({ lower, upper }) => ({
     lower: OpenCV.Scalar.create(lower[0], lower[1], lower[2]),
     upper: OpenCV.Scalar.create(upper[0], upper[1], upper[2]),
   }));
+  let previous: Mat | undefined;
 
-  return ({ pixels, width, height, format }) => {
+  const reset = () => {
+    previous?.release();
+    previous = undefined;
+  };
+
+  const detect = ({ pixels, width, height, format }: RawImage): Candidate[] | undefined => {
     const frame = toRgb(pixels, width, height, format);
     const blurred = OpenCV.Mat.create(height, width, DataTypes.CV_8UC3);
-    const hsv = OpenCV.Mat.create(height, width, DataTypes.CV_8UC3);
-    const mask = OpenCV.Mat.create(height, width, DataTypes.CV_8UC1);
-    const part = OpenCV.Mat.create(height, width, DataTypes.CV_8UC1);
-    const mats: Mat[] = [frame, blurred, hsv, mask, part];
-
+    const gray = OpenCV.Mat.create(height, width, DataTypes.CV_8UC1);
     OpenCV.GaussianBlur(frame, blurred, blurSize, 0);
-    OpenCV.cvtColor(blurred, hsv, ColorConversionCodes.COLOR_RGB2HSV);
-    ranges.forEach((range, i) => {
-      OpenCV.inRange(hsv, range.lower, range.upper, i === 0 ? mask : part);
-      if (i > 0) OpenCV.bitwise_or(mask, part, mask);
-    });
-    // Open removes isolated specks, close fills the holes of a highlight on the ball.
-    OpenCV.morphologyEx(mask, mask, MorphTypes.MORPH_OPEN, openKernel);
-    OpenCV.morphologyEx(mask, mask, MorphTypes.MORPH_CLOSE, closeKernel);
+    OpenCV.cvtColor(blurred, gray, ColorConversionCodes.COLOR_RGB2GRAY);
+    frame.release();
 
-    const contours = OpenCV.PointVectorOfVectors.create();
-    OpenCV.findContours(
-      mask,
-      contours,
-      RetrievalModes.RETR_EXTERNAL,
-      ContourApproximationModes.CHAIN_APPROX_SIMPLE,
-    );
-
-    const candidates: Candidate[] = [];
-    for (let i = 0; i < contours.length; i++) {
-      const contour = contours.get(i);
-      const area = OpenCV.contourArea(contour).value;
-      // Cheap reject first: most blobs are specks or large yellow things.
-      if (area >= config.minArea && area <= config.maxArea) {
-        const perimeter = OpenCV.arcLength(contour, true).value;
-        const box = OpenCV.boundingRect(contour);
-        candidates.push({
-          x: box.x + box.width / 2,
-          y: box.y + box.height / 2,
-          r: Math.max(box.width, box.height) / 2,
-          area,
-          circularity: circularity(area, perimeter),
-        });
-      }
+    if (!previous) {
+      previous = gray;
+      blurred.release();
+      return [];
     }
 
-    contours.release();
-    for (const mat of mats) mat.release();
+    const motion = OpenCV.Mat.create(height, width, DataTypes.CV_8UC1);
+    OpenCV.absdiff(gray, previous, motion);
+    if (OpenCV.mean(motion).a < config.repeatThreshold) {
+      // A repeated frame: keep comparing with the one before it
+      for (const mat of [gray, blurred, motion]) mat.release();
+      return undefined;
+    }
+    previous.release();
+    previous = gray;
+
+    OpenCV.threshold(motion, motion, config.motionThreshold, 255, ThresholdTypes.THRESH_BINARY);
+    OpenCV.dilate(motion, motion, dilateKernel, anchor, 1, BorderTypes.BORDER_CONSTANT, border);
+    const movers = boxes(motion).filter(
+      (box) => Math.max(box.width, box.height) <= config.maxMoverSide * width,
+    );
+
+    const hsv = OpenCV.Mat.create(height, width, DataTypes.CV_8UC3);
+    const yellow = OpenCV.Mat.create(height, width, DataTypes.CV_8UC1);
+    const part = OpenCV.Mat.create(height, width, DataTypes.CV_8UC1);
+    OpenCV.cvtColor(blurred, hsv, ColorConversionCodes.COLOR_RGB2HSV);
+    ranges.forEach((range, i) => {
+      OpenCV.inRange(hsv, range.lower, range.upper, i === 0 ? yellow : part);
+      if (i > 0) OpenCV.bitwise_or(yellow, part, yellow);
+    });
+    OpenCV.bitwise_and(yellow, motion, yellow);
+
+    const candidates: Candidate[] = [];
+    for (const box of boxes(yellow)) {
+      const side = Math.max(box.width, box.height);
+      if (box.width * box.height < config.minBallPixels || side > config.maxBallSide * width)
+        continue;
+      const x = box.x + box.width / 2;
+      const y = box.y + box.height / 2;
+      if (movers.some((m) => x >= m.x && x <= m.x + m.width && y >= m.y && y <= m.y + m.height))
+        candidates.push({ x, y, r: side / 2 });
+    }
+
+    for (const mat of [blurred, motion, hsv, yellow, part]) mat.release();
     return candidates;
   };
+
+  return { detect, reset };
+}
+
+/** The bounding box of each outer blob of a mask. */
+function boxes(mask: Mat): Box[] {
+  const contours = OpenCV.PointVectorOfVectors.create();
+  OpenCV.findContours(
+    mask,
+    contours,
+    RetrievalModes.RETR_EXTERNAL,
+    ContourApproximationModes.CHAIN_APPROX_SIMPLE,
+  );
+  const result: Box[] = [];
+  for (let i = 0; i < contours.length; i++) {
+    const { x, y, width, height } = OpenCV.boundingRect(contours.get(i));
+    result.push({ x, y, width, height });
+  }
+  contours.release();
+  return result;
 }
 
 /** The frame as a 3-channel RGB matrix: the camera gives 4 channels, the clip reader 3. */

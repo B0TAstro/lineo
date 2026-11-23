@@ -1,48 +1,48 @@
-import type { BallConfig } from './ballConfig';
+/** A small, bright yellow, moving blob in one frame, in pixels of the analysed frame. */
+export type Candidate = { x: number; y: number; r: number };
 
-/** A blob of ball colour in one frame, in pixels of the analysed frame. */
-export type Candidate = { x: number; y: number; r: number; area: number; circularity: number };
+type Point = { x: number; y: number };
 
-/** 1 for a perfect disc, lower for anything stretched or ragged: 4πA / P². */
-export function circularity(area: number, perimeter: number): number {
-  if (perimeter <= 0) return 0;
-  return Math.min(1, (4 * Math.PI * area) / (perimeter * perimeter));
-}
+const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y);
 
-/** Whether a blob is ball-sized and round enough to be considered at all. */
-export function isPlausible(candidate: Candidate, config: BallConfig): boolean {
-  return (
-    candidate.area >= config.minArea &&
-    candidate.area <= config.maxArea &&
-    candidate.circularity >= config.minCircularity
-  );
+/** The candidate closest to where the ball should be, if one is within `maxDistance`. */
+export function nearest(
+  candidates: readonly Candidate[],
+  expected: Point,
+  maxDistance: number,
+): Candidate | undefined {
+  let best: Candidate | undefined;
+  let bestDistance = maxDistance;
+  for (const candidate of candidates) {
+    const d = distance(candidate, expected);
+    if (d < bestDistance) {
+      best = candidate;
+      bestDistance = d;
+    }
+  }
+  return best;
 }
 
 /**
- * The most ball-like candidate (POC's `select_best`): big, round, and close to where the filter
- * expects the ball. The distance is a soft score, not a gate: a far blob can still win.
+ * Where a new track can start: a blob of this frame and one of the previous frame, between
+ * `minMove` and `maxMove` apart. The closest such pair wins. One blob alone is not enough: a
+ * single frame has too many specks that look like a ball.
  */
-export function selectBest(
+export function startPair(
   candidates: readonly Candidate[],
-  predicted: { x: number; y: number } | undefined,
-  diagonal: number,
-  weights: BallConfig['weights'],
-): Candidate | undefined {
-  const largest = Math.max(0, ...candidates.map((c) => c.area));
-  let best: Candidate | undefined;
-  let bestScore = -Infinity;
-  for (const candidate of candidates) {
-    const areaScore = largest > 0 ? candidate.area / largest : 0;
-    const distanceScore = predicted
-      ? Math.max(0, 1 - Math.hypot(candidate.x - predicted.x, candidate.y - predicted.y) / diagonal)
-      : 1;
-    const score =
-      weights.area * areaScore +
-      weights.circularity * candidate.circularity +
-      weights.distance * distanceScore;
-    if (score > bestScore) {
-      best = candidate;
-      bestScore = score;
+  previous: readonly Candidate[],
+  minMove: number,
+  maxMove: number,
+): { from: Candidate; to: Candidate } | undefined {
+  let best: { from: Candidate; to: Candidate } | undefined;
+  let bestDistance = Infinity;
+  for (const to of candidates) {
+    for (const from of previous) {
+      const d = distance(from, to);
+      if (d >= minMove && d <= maxMove && d < bestDistance) {
+        best = { from, to };
+        bestDistance = d;
+      }
     }
   }
   return best;

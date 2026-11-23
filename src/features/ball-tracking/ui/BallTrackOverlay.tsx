@@ -9,8 +9,11 @@ const BALL = '#FFFF00';
 const PREDICTED = '#FF8C00';
 const TRAIL = '#FFC800';
 const VELOCITY = '#FF0000';
-/** A point closer than this to the time on screen is the ball "now". */
-const NOW_TOLERANCE_S = 0.02;
+/**
+ * A point closer than this to the time on screen is the ball "now": while the replay plays, the
+ * analysis may trail the picture by a few frames.
+ */
+const NOW_TOLERANCE_S = 0.1;
 /** A longer hole between two points is a lost track: the trail is not drawn across it. */
 const MAX_GAP_S = 0.1;
 const ARROW_HEAD = 8;

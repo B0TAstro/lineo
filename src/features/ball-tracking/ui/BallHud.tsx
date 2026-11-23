@@ -4,8 +4,11 @@ import { colors, radius } from '@/shared/ui/theme';
 
 import type { BallPoint } from '../logic/ballPoint';
 
-/** A point closer than this to the time on screen is the ball "now". */
-const NOW_TOLERANCE_S = 0.02;
+/**
+ * A point closer than this to the time on screen is the ball "now": while the replay plays, the
+ * analysis may trail the picture by a few frames.
+ */
+const NOW_TOLERANCE_S = 0.1;
 
 /**
  * The POC's figures for the frame on screen: state, frames without a detection, position, radius,

@@ -55,7 +55,7 @@ export function ClipPlayer({
   const [rate, setRate] = useState<number>(DEFAULT_RATE);
   const [timeS, setTimeS] = useState(initial.t);
   const peaks = useSoundPeaks(timeline);
-  const ball = useBallTrack(timeline);
+  const ball = useBallTrack(timeline, timeS);
 
   const setTime = (t: number) => {
     timeRef.current = t;
@@ -168,12 +168,12 @@ export function ClipPlayer({
               onEnd={() => onSegmentEnd(index)}
             />
           ))}
-          {ball.status !== 'idle' && ball.video && (
+          {ball.on && ball.video && (
             <BallTrackOverlay points={ball.points} video={ball.video} timeS={timeS} />
           )}
         </ZoomableView>
 
-        {ball.status !== 'idle' && ball.frame && (
+        {ball.on && ball.frame && (
           <SafeAreaView
             style={[styles.hud, portrait && styles.hudPortrait]}
             edges={portrait ? ['top'] : ['bottom', 'left']}
@@ -185,6 +185,7 @@ export function ClipPlayer({
               frame={ball.frame}
               frames={ball.frames}
               seen={ball.seen}
+              extra={`${ball.ms.toFixed(0)} ms / image`}
             />
           </SafeAreaView>
         )}
@@ -204,12 +205,7 @@ export function ClipPlayer({
         onJumpToPeak={jumpToPeak}
         onSeek={pauseAt}
         ball={ball}
-        // The whole point, from its start: the replay plays along while the analysis runs ahead.
-        onTrackBall={() => {
-          ball.analyse();
-          seekTo(0);
-          setPlaying(true);
-        }}
+        onTrackBall={ball.toggle}
         footer={footer}
       />
     </View>

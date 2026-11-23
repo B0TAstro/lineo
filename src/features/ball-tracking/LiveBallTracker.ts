@@ -3,7 +3,7 @@ import { Store } from '@/shared/lib/Store';
 import { type BallConfig } from './logic/ballConfig';
 import { type BallPoint, toBallPoint } from './logic/ballPoint';
 import { BallTracker } from './logic/BallTracker';
-import type { DetectCandidates, RawImage } from './native/OpenCvDetector';
+import type { BallDetector, RawImage } from './native/OpenCvDetector';
 
 /** A camera frame for the live tracking: the image, its visible width, its time in seconds. */
 export type LiveFrame = RawImage & { visibleWidth: number; t: number };
@@ -31,7 +31,7 @@ const EMPTY: LiveBallState = { trail: [], frames: 0, seen: 0, t: 0, ms: 0, frame
  */
 export class LiveBallTracker {
   readonly store = new Store<LiveBallState>(EMPTY);
-  private detect: DetectCandidates | undefined;
+  private detector: BallDetector | undefined;
   private tracker: BallTracker | undefined;
   private trackerWidth = 0;
   private trail: BallPoint[] = [];
@@ -39,18 +39,21 @@ export class LiveBallTracker {
   private seen = 0;
 
   constructor(
-    private readonly createDetector: (config: BallConfig) => DetectCandidates,
+    private readonly createDetector: (config: BallConfig) => BallDetector,
     private readonly config: BallConfig,
   ) {}
 
   readonly onFrame = (frame: LiveFrame) => {
     const start = performance.now();
-    this.detect ??= this.createDetector(this.config);
+    const detector = (this.detector ??= this.createDetector(this.config));
     if (!this.tracker || this.trackerWidth !== frame.width) {
       this.tracker = new BallTracker(this.config, frame);
       this.trackerWidth = frame.width;
+      detector.reset();
     }
-    const ball = this.tracker.step(frame.t, this.detect(frame));
+    const candidates = detector.detect(frame);
+    if (!candidates) return;
+    const ball = this.tracker.step(frame.t, candidates);
     const visible = { width: frame.visibleWidth, height: frame.height };
     this.frames++;
     if (ball?.state === 'detected') this.seen++;
@@ -69,6 +72,7 @@ export class LiveBallTracker {
   };
 
   reset() {
+    this.detector?.reset();
     this.tracker = undefined;
     this.trail = [];
     this.frames = 0;

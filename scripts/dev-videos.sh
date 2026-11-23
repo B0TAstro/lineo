@@ -2,7 +2,7 @@
 # Dev only: copies test videos into the app's Documents on the plugged iPhone, for the replay's
 # "Vidéos test" (ball tracking on real matches, without filming them). Nothing goes in the build.
 #
-#   npm run dev:videos                       # ../temoin-poc-ball-tracking/data/videos
+#   npm run dev:videos                       # dev-videos/ (git-ignored)
 #   npm run dev:videos -- ~/some/folder      # any folder of .mp4 / .mov
 #   DEVICE="iPhone Tom" npm run dev:videos   # pick the phone when several are plugged
 #
@@ -11,7 +11,7 @@ set -euo pipefail
 export LC_NUMERIC=C
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SOURCE="${1:-$ROOT/../temoin-poc-ball-tracking/data/videos}"
+SOURCE="${1:-$ROOT/dev-videos}"
 BUNDLE_ID="com.tomboullay.temoin"
 
 TMP="$(mktemp -d)"
