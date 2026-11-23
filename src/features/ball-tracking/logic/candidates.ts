@@ -47,3 +47,35 @@ export function startPair(
   }
   return best;
 }
+
+/** A rectangle of the analysed frame, in pixels: around a blob, or around an area that moved. */
+export type Box = { x: number; y: number; width: number; height: number };
+
+/**
+ * The blobs that can be the ball, as candidates at their centre: ball-sized, and inside a small
+ * area that moved. A person moving makes a large one: their hands, feet and racket are not
+ * taken for the ball, at the price of the ball itself while it is against them.
+ */
+export function ballBlobs(
+  blobs: readonly Box[],
+  movers: readonly Box[],
+  frameWidth: number,
+  config: { minBallPixels: number; maxBallSide: number; maxMoverSide: number },
+): Candidate[] {
+  const small = movers.filter(
+    (mover) => Math.max(mover.width, mover.height) <= config.maxMoverSide * frameWidth,
+  );
+  const candidates: Candidate[] = [];
+  for (const blob of blobs) {
+    const side = Math.max(blob.width, blob.height);
+    if (blob.width * blob.height < config.minBallPixels) continue;
+    if (side > config.maxBallSide * frameWidth) continue;
+    const x = blob.x + blob.width / 2;
+    const y = blob.y + blob.height / 2;
+    const alone = small.some(
+      (m) => x >= m.x && x <= m.x + m.width && y >= m.y && y <= m.y + m.height,
+    );
+    if (alone) candidates.push({ x, y, r: side / 2 });
+  }
+  return candidates;
+}

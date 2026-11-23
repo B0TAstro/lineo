@@ -9,6 +9,7 @@ import { stopBeforePeak, useSoundPeaks } from '@/features/sound-peaks';
 import { toUri } from '@/shared/native/files';
 import { colors, radius, touch } from '@/shared/ui/theme';
 import { ZoomableView } from '@/shared/ui/ZoomableView';
+import type { Court } from '@/sports/tennis';
 
 import { PlaybackPanel } from './components/PlaybackPanel';
 
@@ -26,6 +27,7 @@ export type VideoOrientation = 'portrait' | 'landscape';
 export function ClipPlayer({
   segments,
   fps,
+  court,
   header,
   footer,
   onVideoOrientation,
@@ -33,6 +35,8 @@ export function ClipPlayer({
 }: {
   segments: readonly Segment[];
   fps: number;
+  /** The court of the session: the ball tracking takes its settings from it */
+  court: Court;
   header: ReactNode;
   footer: ReactNode;
   /** How the point was filmed, once its video is loaded: the screen turns to match it */
@@ -55,7 +59,7 @@ export function ClipPlayer({
   const [rate, setRate] = useState<number>(DEFAULT_RATE);
   const [timeS, setTimeS] = useState(initial.t);
   const peaks = useSoundPeaks(timeline);
-  const ball = useBallTrack(timeline, timeS);
+  const ball = useBallTrack(timeline, timeS, court);
 
   const setTime = (t: number) => {
     timeRef.current = t;
@@ -185,7 +189,7 @@ export function ClipPlayer({
               frame={ball.frame}
               frames={ball.frames}
               seen={ball.seen}
-              extra={`${ball.ms.toFixed(0)} ms / image`}
+              extra={`${ball.ms.toFixed(0)} ms / image   trajectoire ${ball.trackMs.toFixed(0)} ms`}
             />
           </SafeAreaView>
         )}

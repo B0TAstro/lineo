@@ -37,3 +37,7 @@ coverage/
 .idea/
 .vscode/
 *.swp
+
+# Ball tracking bench (scripts/bench): its Python environment and what it writes
+.venv-bench/
+bench-out/

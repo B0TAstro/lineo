@@ -1,4 +1,5 @@
 export { expectedPhrasings, fullScorePhrasings } from './announce';
+export type { Court, Place, Surface } from './court';
 export { pointText, roleLabel, scoreLabel, sideName } from './labels';
 export type { MatchSetup, SetupForm } from './matchSetup';
 export { DEFAULT_FORM, toMatchSetup } from './matchSetup';

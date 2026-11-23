@@ -13,7 +13,8 @@
       "supportsTablet": false,
       "infoPlist": {
         "NSCameraUsageDescription": "Témoin filme le court point par point pour revoir un point contesté. La vidéo reste sur ce téléphone et est supprimée en fin de match."
-      }
+      },
+      "appleTeamId": "8J5GF7NGYS"
     },
     "android": {
       "package": "com.tomboullay.temoin",

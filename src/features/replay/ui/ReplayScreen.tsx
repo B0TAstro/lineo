@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { colors } from '@/shared/ui/theme';
+import type { Court } from '@/sports/tennis';
 
 import { ClipPlayer, type VideoOrientation } from './ClipPlayer';
 import { ControlButton } from './components/ControlButton';
@@ -16,6 +17,7 @@ type Props = {
   clips: readonly ReplayClip[];
   initialIndex: number;
   fps: number;
+  court: Court;
   sides: readonly [Side, Side];
   onOutcome: (outcome: ReplayOutcome) => void;
   onClose: () => void;
@@ -29,7 +31,15 @@ const NO_DEV_VIDEOS: ReplayClip = {
   segments: [],
 };
 
-export function ReplayScreen({ clips, initialIndex, fps, sides, onOutcome, onClose }: Props) {
+export function ReplayScreen({
+  clips,
+  initialIndex,
+  fps,
+  court,
+  sides,
+  onOutcome,
+  onClose,
+}: Props) {
   const [index, setIndex] = useState(initialIndex);
   // Dev builds only: test videos instead of the match's points
   const [devClips, setDevClips] = useState<ReplayClip[]>();
@@ -94,6 +104,7 @@ export function ReplayScreen({ clips, initialIndex, fps, sides, onOutcome, onClo
       key={clip.key}
       segments={clip.segments}
       fps={clip.fps ?? fps}
+      court={court}
       header={header}
       // A test video is not a point of the match: nothing to decide
       footer={devClips ? null : <OutcomeBar sides={sides} onOutcome={onOutcome} />}

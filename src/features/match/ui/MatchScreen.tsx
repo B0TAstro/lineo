@@ -29,7 +29,7 @@ export function MatchScreen({ session }: { session: MatchSession }) {
   useKeepAwake(); // otherwise the screen locks and the OS stops the camera
   // Dev builds only: the replay's ball tracking, live on the camera, to tune it on a court
   const [liveBallOn, setLiveBallOn] = useState(false);
-  const liveBall = useLiveBallTrack(__DEV__ && liveBallOn);
+  const liveBall = useLiveBallTrack(__DEV__ && liveBallOn, session.form.court);
   const camera = useMatchCamera(liveBall.onFrame);
   const appActive = useAppActive();
   const [showQr, setShowQr] = useState(false);
@@ -157,6 +157,7 @@ export function MatchScreen({ session }: { session: MatchSession }) {
           clips={replay.clips}
           initialIndex={replay.initialIndex}
           fps={camera.selectedFps ?? TARGET_FPS}
+          court={session.form.court}
           sides={[
             { id: a.id, name: sideName(state, a.id) },
             { id: b.id, name: sideName(state, b.id) },

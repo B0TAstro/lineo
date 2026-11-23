@@ -67,6 +67,31 @@ export function CreateSessionScreen() {
           value={form.noAd}
           onChange={(noAd) => update({ noAd })}
         />
+
+        <Text style={styles.label}>Lieu</Text>
+        <Choice
+          options={[
+            { value: 'indoor', label: 'Intérieur' },
+            { value: 'outdoor', label: 'Extérieur' },
+          ]}
+          value={form.court.place}
+          onChange={(place) => update({ court: { ...form.court, place } })}
+        />
+
+        <Text style={styles.label}>Surface</Text>
+        <Choice
+          options={[
+            { value: 'grass', label: 'Gazon' },
+            { value: 'hard', label: 'Dur' },
+            { value: 'clay', label: 'Terre battue' },
+          ]}
+          value={form.court.surface}
+          onChange={(surface) => update({ court: { ...form.court, surface } })}
+        />
+        <Text style={styles.hint}>
+          Ces informations aident l&apos;app à régler la détection selon la lumière et la couleur du
+          sol.
+        </Text>
       </ScrollView>
 
       <View style={styles.footer}>
@@ -141,7 +166,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   optionSelected: { backgroundColor: colors.line },
-  optionText: { color: colors.line, fontSize: 18, fontWeight: '700' },
+  optionText: { color: colors.line, fontSize: 18, fontWeight: '700', textAlign: 'center' },
   optionTextSelected: { color: colors.ink },
+  hint: { color: colors.lineDim, fontSize: 14 },
   footer: { padding: 24 },
 });

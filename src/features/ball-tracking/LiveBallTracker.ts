@@ -51,21 +51,25 @@ export class LiveBallTracker {
       this.trackerWidth = frame.width;
       detector.reset();
     }
-    const candidates = detector.detect(frame);
-    if (!candidates) return;
-    const ball = this.tracker.step(frame.t, candidates);
     const visible = { width: frame.visibleWidth, height: frame.height };
-    this.frames++;
-    if (ball?.state === 'detected') this.seen++;
-    // Lost: the path starts over, as in the POC.
-    this.trail = ball
-      ? [...this.trail, toBallPoint(ball, visible)].slice(-this.config.trailLength)
-      : [];
+    // The detector judges a frame once it has seen the next ones: its answers are a frame or two
+    // behind the camera, with their own time.
+    let t = this.store.get().t;
+    for (const judged of detector.detect(frame, frame.t)) {
+      const ball = this.tracker.step(judged.t, judged.candidates);
+      t = judged.t;
+      this.frames++;
+      if (ball?.state === 'detected') this.seen++;
+      // Lost: the path starts over, as in the POC.
+      this.trail = ball
+        ? [...this.trail, toBallPoint(ball, visible)].slice(-this.config.trailLength)
+        : [];
+    }
     this.store.set({
       trail: this.trail,
       frames: this.frames,
       seen: this.seen,
-      t: frame.t,
+      t,
       ms: performance.now() - start,
       frame: visible,
     });

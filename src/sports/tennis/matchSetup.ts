@@ -1,3 +1,4 @@
+import type { Court } from './court';
 import type { MatchConfig, SideId } from './types';
 
 /**
@@ -12,6 +13,8 @@ export type SetupForm = {
   /** Sudden death at 40-40. */
   noAd: boolean;
   firstServer: 'A' | 'B';
+  /** Not for the score: every phone of the session sets its ball detection from it. */
+  court: Court;
 };
 
 export const DEFAULT_FORM: SetupForm = {
@@ -20,6 +23,7 @@ export const DEFAULT_FORM: SetupForm = {
   superTieBreak: true,
   noAd: false,
   firstServer: 'A',
+  court: { place: 'outdoor', surface: 'hard' },
 };
 
 /** Everything the score needs to start: the format of the match and who serves first. */
