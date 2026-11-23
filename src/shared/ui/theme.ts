@@ -15,11 +15,13 @@ export const colors = {
   border: 'rgba(255,255,255,0.3)',
   borderField: 'rgba(255,255,255,0.35)',
   borderStrong: 'rgba(255,255,255,0.9)',
+  divider: 'rgba(255,255,255,0.08)',
 } as const;
 
 /** Grid of 8 */
 export const space = { s: 8, m: 16, l: 24 } as const;
 export const radius = 12;
+export const radiusCard = 16;
 export const borderWidth = 1.5;
 export const touch = 64;
 export const touchMatch = 80;

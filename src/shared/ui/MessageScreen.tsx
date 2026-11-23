@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors } from './theme';
+import { colors, space, type } from './theme';
 
 /** A full screen that says one thing: waiting, a permission to grant, a missing camera */
 export function MessageScreen({
@@ -27,10 +27,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
-    gap: 24,
+    padding: space.l,
+    gap: space.l,
     backgroundColor: colors.bg,
   },
-  message: { color: colors.text, fontSize: 22, textAlign: 'center' },
-  hint: { color: colors.textSoft, fontSize: 18, textAlign: 'center' },
+  message: { ...type.title, fontSize: 28, color: colors.text, textAlign: 'center' },
+  hint: { ...type.body, fontSize: 17, color: colors.textDim, textAlign: 'center' },
 });
