@@ -4,6 +4,7 @@ import type { SvgProps } from 'react-native-svg';
 import { colors } from './theme';
 import Back from '../../../assets/icons/back.svg';
 import Bluetooth from '../../../assets/icons/bluetooth.svg';
+import Bot from '../../../assets/icons/bot.svg';
 import Calibrate from '../../../assets/icons/calibrate.svg';
 import CameraSwitch from '../../../assets/icons/camera-switch.svg';
 import Camera from '../../../assets/icons/camera.svg';
@@ -37,6 +38,8 @@ import Wifi from '../../../assets/icons/wifi.svg';
 const ICONS = {
   back: Back,
   bluetooth: Bluetooth,
+  /** Not in Figma: dev builds only (test videos), drawn in the same style */
+  bot: Bot,
   calibrate: Calibrate,
   camera: Camera,
   cameraSwitch: CameraSwitch,

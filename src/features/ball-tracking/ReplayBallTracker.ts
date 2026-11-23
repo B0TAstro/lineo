@@ -42,6 +42,8 @@ export type BallTrackState = {
   /** Size of the analysed frames, for the figures in pixels. */
   frame: { width: number; height: number } | undefined;
   error: string | undefined;
+  /** The reading reached the end of the point's last file: the whole point has been analysed */
+  done: boolean;
 };
 
 const OFF: BallTrackState = {
@@ -54,6 +56,7 @@ const OFF: BallTrackState = {
   video: undefined,
   frame: undefined,
   error: undefined,
+  done: false,
 };
 
 /** What has been read of one file: a run of frames in a row, and what the detector found in each. */
@@ -140,6 +143,8 @@ export class ReplayBallTracker {
         }
         if (reading.ended || reading.readS >= localS + AHEAD_S - SAME_FRAME_S) {
           if (reading.untracked > 0) this.track(reading);
+          const last = reading.index === this.timeline.segments.length - 1;
+          if (reading.ended && last && !this.store.get().done) this.store.set({ done: true });
           return;
         }
 

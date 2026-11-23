@@ -17,11 +17,14 @@ export function PlayerTopBar({
   point,
   onBack,
   onOpenPanel,
+  devVideos,
 }: {
   point: PointNav;
   onBack: () => void;
   /** Only when the panel is closed: it has its own button to close */
   onOpenPanel: (() => void) | undefined;
+  /** Dev builds only: plays the test videos instead of the match's points */
+  devVideos: { on: boolean; onToggle: () => void } | undefined;
 }) {
   return (
     <View style={styles.bar} pointerEvents="box-none">
@@ -39,6 +42,15 @@ export function PlayerTopBar({
         <Arrow icon="chevronRight" label="Point suivant" onPress={point.onNext} />
       </View>
       <View style={styles.end}>
+        {devVideos && (
+          <IconButton
+            icon="bot"
+            label={devVideos.on ? 'Revenir aux points du match' : 'Vidéos test'}
+            variant="overlay"
+            selected={devVideos.on}
+            onPress={devVideos.onToggle}
+          />
+        )}
         {onOpenPanel && (
           <IconButton
             icon="panelOpen"
@@ -87,6 +99,6 @@ const styles = StyleSheet.create({
     color: colors.accent,
   },
   title: { fontFamily: fonts.regular, fontSize: 18, color: colors.text },
-  end: { width: 44, alignItems: 'flex-end' },
+  end: { minWidth: 44, flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
   dim: { opacity: 0.3 },
 });

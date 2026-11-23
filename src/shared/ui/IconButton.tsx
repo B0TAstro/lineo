@@ -11,12 +11,15 @@ export function IconButton({
   icon,
   label,
   variant = 'tool',
+  selected,
   disabled,
   onPress,
 }: {
   icon: IconName;
   label: string;
   variant?: 'tool' | 'plain' | 'overlay';
+  /** A switch that is on */
+  selected?: boolean;
   disabled?: boolean;
   onPress: () => void;
 }) {
@@ -26,11 +29,16 @@ export function IconButton({
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={label}
-      accessibilityState={{ disabled: disabled ?? false }}
+      accessibilityState={{ disabled: disabled ?? false, selected: selected ?? false }}
       hitSlop={8}
-      style={({ pressed }) => [styles.base, styles[variant], (pressed || disabled) && styles.dim]}
+      style={({ pressed }) => [
+        styles.base,
+        styles[variant],
+        selected && styles.selected,
+        (pressed || disabled) && styles.dim,
+      ]}
     >
-      <Icon name={icon} />
+      <Icon name={icon} {...(selected && { color: colors.onAccent })} />
     </Pressable>
   );
 }
@@ -54,5 +62,6 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.12)',
     backgroundColor: 'rgba(10,10,10,0.7)',
   },
+  selected: { backgroundColor: colors.warning, borderColor: colors.warning },
   dim: { opacity: 0.4 },
 });

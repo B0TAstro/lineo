@@ -1,8 +1,6 @@
 import { lockAsync, OrientationLock } from 'expo-screen-orientation';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, fonts } from '@/shared/ui/theme';
 import type { Court } from '@/sports/tennis';
 
 import { ClipPlayer, type VideoOrientation } from './ClipPlayer';
@@ -75,12 +73,6 @@ export function ReplayScreen({
     onPrevious: index > 0 ? () => setIndex(index - 1) : undefined,
     onNext: index < shown.length - 1 ? () => setIndex(index + 1) : undefined,
   };
-  const devSwitch = __DEV__ ? (
-    <Pressable onPress={toggleDevVideos} style={styles.dev}>
-      <Text style={styles.devText}>{devClips ? 'Points du match' : 'Vidéos test'}</Text>
-    </Pressable>
-  ) : undefined;
-
   return (
     <ClipPlayer
       key={clip.key}
@@ -88,22 +80,15 @@ export function ReplayScreen({
       fps={clip.fps ?? fps}
       court={court}
       point={point}
-      renderPanel={(close) =>
+      renderPanel={
         // A test video is not a point of the match: nothing to decide
-        devClips ? (
-          <View style={styles.devPanel}>{devSwitch}</View>
-        ) : (
-          <DecisionPanel sides={sides} onOutcome={onOutcome} onClose={close} footer={devSwitch} />
-        )
+        devClips
+          ? undefined
+          : (close) => <DecisionPanel sides={sides} onOutcome={onOutcome} onClose={close} />
       }
+      devVideos={__DEV__ ? { on: devClips !== undefined, onToggle: toggleDevVideos } : undefined}
       onVideoOrientation={setOrientation}
       onClose={onClose}
     />
   );
 }
-
-const styles = StyleSheet.create({
-  dev: { marginTop: 16, alignSelf: 'flex-start' },
-  devText: { fontFamily: fonts.light, fontSize: 13, color: colors.textDim },
-  devPanel: { padding: 16 },
-});

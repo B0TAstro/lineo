@@ -5,7 +5,7 @@ import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Video, { type VideoRef } from 'react-native-video';
 
-import { BallHud, BallTrackOverlay, useBallTrack } from '@/features/ball-tracking';
+import { BallHud, BallTrackOverlay, bounceMarks, useBallTrack } from '@/features/ball-tracking';
 import { buildTimeline, locate, type Segment } from '@/features/recording';
 import { stopBeforePeak, useSoundPeaks } from '@/features/sound-peaks';
 import { toUri } from '@/shared/native/files';
@@ -15,6 +15,7 @@ import { ZoomableView } from '@/shared/ui/ZoomableView';
 import type { Court } from '@/sports/tennis';
 
 import { useAutoHide } from '../useAutoHide';
+import { AssistedReading } from './components/AssistedReading';
 import { PlayerControls } from './components/PlayerControls';
 import { PlayerTools, nextRate, type Rate } from './components/PlayerTools';
 import { type PointNav, PlayerTopBar } from './components/PlayerTopBar';
@@ -36,6 +37,7 @@ export function ClipPlayer({
   court,
   point,
   renderPanel,
+  devVideos,
   onVideoOrientation,
   onClose,
 }: {
@@ -46,6 +48,8 @@ export function ClipPlayer({
   point: PointNav;
   /** The decision panel beside the video, with its button to close it; none for a test video */
   renderPanel: ((close: () => void) => ReactNode) | undefined;
+  /** Dev builds only: the switch to the test videos, next to the panel button */
+  devVideos: { on: boolean; onToggle: () => void } | undefined;
   /** How the point was filmed, once its video is loaded: the screen turns to match it */
   onVideoOrientation: (orientation: VideoOrientation) => void;
   onClose: () => void;
@@ -71,6 +75,8 @@ export function ClipPlayer({
   const [timeS, setTimeS] = useState(initial.t);
   const peaks = useSoundPeaks(timeline);
   const ball = useBallTrack(timeline, timeS, court);
+  const bounces = useMemo(() => bounceMarks(ball.points, peaks), [ball.points, peaks]);
+  const [readingOpen, setReadingOpen] = useState(true);
 
   const setTime = (t: number) => {
     timeRef.current = t;
@@ -155,6 +161,7 @@ export function ClipPlayer({
     <PlayerTopBar
       point={point}
       onBack={onClose}
+      devVideos={devVideos}
       onOpenPanel={
         renderPanel && !panelShown
           ? tool(() => {
@@ -227,12 +234,18 @@ export function ClipPlayer({
             />
           ))}
           {ball.on && ball.video && (
-            <BallTrackOverlay points={ball.points} video={ball.video} timeS={timeS} />
+            <BallTrackOverlay
+              points={ball.points}
+              bounces={bounces}
+              video={ball.video}
+              timeS={timeS}
+            />
           )}
         </ZoomableView>
 
-        {ball.on && ball.frame && (
-          <View style={[styles.hud, { paddingTop: insets.top + 72 }]} pointerEvents="none">
+        {/* Dev builds only: the tracking's figures, to tune it on a court */}
+        {__DEV__ && ball.on && ball.frame && (
+          <View style={[styles.hud, { bottom: insets.bottom + 72 }]} pointerEvents="none">
             <BallHud
               points={ball.points}
               timeS={timeS}
@@ -291,7 +304,10 @@ export function ClipPlayer({
               <Seekbar timeS={timeS} totalS={timeline.totalS} peaks={peaks} onSeek={onScrub} />
               <PlayerTools
                 tracking={ball.on}
-                onTrack={tool(ball.toggle)}
+                onTrack={tool(() => {
+                  setReadingOpen(true);
+                  ball.toggle();
+                })}
                 muted={muted}
                 onToggleMute={tool(() => setMuted(!muted))}
                 rate={rate}
@@ -302,6 +318,20 @@ export function ClipPlayer({
             </View>
           </View>
         </Animated.View>
+
+        {/* Once the whole point is tracked: stays over the video, the controls fade without it */}
+        {ball.on && ball.done && (
+          <View
+            style={[styles.reading, { top: insets.top + 72, left: insets.left + 24 }]}
+            pointerEvents="box-none"
+          >
+            <AssistedReading
+              open={readingOpen}
+              onOpen={() => setReadingOpen(true)}
+              onClose={() => setReadingOpen(false)}
+            />
+          </View>
+        )}
       </View>
 
       {panel}
@@ -328,7 +358,8 @@ const styles = StyleSheet.create({
   containerPortrait: { flexDirection: 'column' },
   stage: { flex: 1 },
   hidden: { opacity: 0 },
-  hud: { position: 'absolute', top: 0, left: 0, paddingLeft: 24 },
+  hud: { position: 'absolute', left: 0, paddingLeft: 24 },
+  reading: { position: 'absolute' },
   fadeTop: { position: 'absolute', top: 0, left: 0, right: 0, height: 96 },
   fadeBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 110 },
   top: { position: 'absolute' },

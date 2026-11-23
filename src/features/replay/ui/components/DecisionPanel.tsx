@@ -20,13 +20,10 @@ export function DecisionPanel({
   sides,
   onOutcome,
   onClose,
-  footer,
 }: {
   sides: readonly [Side, Side];
   onOutcome: (outcome: ReplayOutcome) => void;
   onClose: () => void;
-  /** Dev builds only: the test videos switch */
-  footer?: ReactNode;
 }) {
   const [chosen, setChosen] = useState<ReplayOutcome>();
   const chosenLabel =
@@ -76,7 +73,6 @@ export function DecisionPanel({
           />
         </View>
       )}
-      {footer}
     </ScrollView>
   );
 }
