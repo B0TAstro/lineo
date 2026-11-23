@@ -112,11 +112,11 @@ function ballLine(ball: BallTrackState): string | undefined {
 }
 
 const styles = StyleSheet.create({
-  panel: { width: 340, backgroundColor: colors.ink },
-  panelPortrait: { maxHeight: '50%', backgroundColor: colors.ink },
+  panel: { width: 340, backgroundColor: colors.bg },
+  panelPortrait: { maxHeight: '50%', backgroundColor: colors.bg },
   content: { padding: 16, gap: 12 },
   time: {
-    color: colors.line,
+    color: colors.text,
     fontSize: 18,
     fontWeight: '700',
     textAlign: 'center',
@@ -129,9 +129,9 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
   },
-  trackFill: { height: '100%', backgroundColor: colors.ball },
+  trackFill: { height: '100%', backgroundColor: colors.accent },
   /** A sound peak: a mark, not a verdict. */
-  peak: { position: 'absolute', top: 6, bottom: 6, width: 2, backgroundColor: colors.line },
+  peak: { position: 'absolute', top: 6, bottom: 6, width: 2, backgroundColor: colors.text },
   row: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
-  ballLine: { color: colors.lineDim, fontSize: 14, textAlign: 'center' },
+  ballLine: { color: colors.textSoft, fontSize: 14, textAlign: 'center' },
 });

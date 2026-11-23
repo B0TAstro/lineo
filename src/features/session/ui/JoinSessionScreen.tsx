@@ -85,20 +85,20 @@ export function JoinSessionScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.ink },
+  container: { flex: 1, backgroundColor: colors.bg },
   overlay: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 24,
   },
-  title: { color: colors.line, fontSize: 28, fontWeight: '800', textAlign: 'center' },
-  hint: { color: colors.line, fontSize: 18, textAlign: 'center' },
+  title: { color: colors.text, fontSize: 28, fontWeight: '800', textAlign: 'center' },
+  hint: { color: colors.text, fontSize: 18, textAlign: 'center' },
   frame: {
     width: 260,
     height: 260,
     borderRadius: radius,
     borderWidth: 4,
-    borderColor: colors.ball,
+    borderColor: colors.accent,
   },
 });

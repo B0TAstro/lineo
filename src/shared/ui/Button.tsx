@@ -4,7 +4,7 @@ import { colors, radius, touch } from './theme';
 
 type Variant = 'primary' | 'outline' | 'var' | 'soft';
 
-/** Large match button: 64 pt minimum, readable with a sweaty thumb (design.md §7.3). */
+/** Large match button: 64 pt minimum, readable with a sweaty thumb */
 export function Button({
   label,
   detail,
@@ -20,6 +20,7 @@ export function Button({
   disabled?: boolean;
   style?: ViewStyle;
 }) {
+  const onAccent = variant === 'primary' || variant === 'var';
   return (
     <Pressable
       onPress={onPress}
@@ -33,9 +34,9 @@ export function Button({
         style,
       ]}
     >
-      <Text style={[styles.label, variant === 'var' && styles.labelOnBall]}>{label}</Text>
+      <Text style={[styles.label, onAccent && styles.labelOnAccent]}>{label}</Text>
       {detail != null && (
-        <Text style={[styles.detail, variant === 'var' && styles.labelOnBall]}>{detail}</Text>
+        <Text style={[styles.detail, onAccent && styles.labelOnAccent]}>{detail}</Text>
       )}
     </Pressable>
   );
@@ -51,12 +52,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 2,
   },
-  primary: { backgroundColor: colors.court },
-  outline: { borderWidth: 2, borderColor: colors.line },
-  var: { backgroundColor: colors.ball },
-  soft: { backgroundColor: colors.inkSoft },
+  primary: { backgroundColor: colors.accent },
+  outline: { borderWidth: 2, borderColor: colors.text },
+  var: { backgroundColor: colors.accent },
+  soft: { backgroundColor: colors.card },
   dim: { opacity: 0.4 },
-  label: { color: colors.line, fontSize: 22, fontWeight: '800', textAlign: 'center' },
-  labelOnBall: { color: colors.ink },
-  detail: { color: colors.lineDim, fontSize: 16, textAlign: 'center' },
+  label: { color: colors.text, fontSize: 22, fontWeight: '800', textAlign: 'center' },
+  labelOnAccent: { color: colors.onAccent },
+  detail: { color: colors.textSoft, fontSize: 16, textAlign: 'center' },
 });

@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   text: { gap: 16, maxWidth: 320 },
-  title: { color: colors.line, fontSize: 28, fontWeight: '800' },
-  code: { color: colors.ball, fontSize: 28, fontWeight: '800', letterSpacing: 4 },
-  hint: { color: colors.lineDim, fontSize: 18, textAlign: 'center' },
+  title: { color: colors.text, fontSize: 28, fontWeight: '800' },
+  code: { color: colors.accent, fontSize: 28, fontWeight: '800', letterSpacing: 4 },
+  hint: { color: colors.textSoft, fontSize: 18, textAlign: 'center' },
 });

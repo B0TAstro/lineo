@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
   header: { gap: 8 },
   nav: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   navText: { flexShrink: 1, flexGrow: 1 },
-  navSubtitle: { color: colors.ball, fontSize: 16, fontWeight: '800' },
-  navTitle: { color: colors.line, fontSize: 18, fontWeight: '800' },
+  navSubtitle: { color: colors.accent, fontSize: 16, fontWeight: '800' },
+  navTitle: { color: colors.text, fontSize: 18, fontWeight: '800' },
   row: { flexDirection: 'row' },
 });

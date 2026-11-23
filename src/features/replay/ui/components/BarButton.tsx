@@ -16,7 +16,7 @@ export function BarButton({
       onPress={onPress}
       style={({ pressed }) => [styles.bar, primary && styles.barPrimary, pressed && styles.dim]}
     >
-      <Text style={styles.barText} numberOfLines={1}>
+      <Text style={[styles.barText, primary && styles.barTextPrimary]} numberOfLines={1}>
         {label}
       </Text>
     </Pressable>
@@ -28,12 +28,13 @@ const styles = StyleSheet.create({
     minHeight: touch,
     borderRadius: radius,
     borderWidth: 2,
-    borderColor: colors.line,
+    borderColor: colors.text,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 8,
   },
-  barPrimary: { backgroundColor: colors.court, borderColor: colors.court },
-  barText: { color: colors.line, fontSize: 18, fontWeight: '700' },
+  barPrimary: { backgroundColor: colors.accent, borderColor: colors.accent },
+  barText: { color: colors.text, fontSize: 18, fontWeight: '700' },
+  barTextPrimary: { color: colors.onAccent },
   dim: { opacity: 0.3 },
 });

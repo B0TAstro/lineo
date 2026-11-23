@@ -6,7 +6,7 @@ import { colors, radius } from './theme';
 
 export type IconName = ComponentProps<typeof Ionicons>['name'];
 
-/** A small square button for a setting, out of the way of the match buttons. */
+/** A small square button for a setting, out of the way of the match buttons */
 export function IconButton({
   icon,
   label,
@@ -24,7 +24,7 @@ export function IconButton({
       hitSlop={8}
       style={({ pressed }) => [styles.tool, pressed && styles.pressed]}
     >
-      <Ionicons name={icon} size={24} color={colors.line} />
+      <Ionicons name={icon} size={24} color={colors.text} />
     </Pressable>
   );
 }
@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: radius,
-    backgroundColor: colors.inkSoft,
+    backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
   },

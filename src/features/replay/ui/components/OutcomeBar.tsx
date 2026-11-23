@@ -54,5 +54,5 @@ export function OutcomeBar({
 const styles = StyleSheet.create({
   outcomes: { gap: 8 },
   confirm: { gap: 12 },
-  confirmText: { color: colors.line, fontSize: 20, fontWeight: '700', textAlign: 'center' },
+  confirmText: { color: colors.text, fontSize: 20, fontWeight: '700', textAlign: 'center' },
 });

@@ -26,7 +26,7 @@ export function CreateSessionScreen() {
           value={form.nameA}
           onChangeText={(nameA) => update({ nameA })}
           placeholder="Joueur A"
-          placeholderTextColor={colors.lineDim}
+          placeholderTextColor={colors.textSoft}
           maxLength={16}
         />
         <TextInput
@@ -34,7 +34,7 @@ export function CreateSessionScreen() {
           value={form.nameB}
           onChangeText={(nameB) => update({ nameB })}
           placeholder="Joueur B"
-          placeholderTextColor={colors.lineDim}
+          placeholderTextColor={colors.textSoft}
           maxLength={16}
         />
 
@@ -142,16 +142,16 @@ function Choice<T extends string | boolean>({
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.ink },
+  screen: { flex: 1, backgroundColor: colors.bg },
   content: { padding: 24, gap: 12 },
-  title: { color: colors.line, fontSize: 28, fontWeight: '800', marginBottom: 8 },
-  label: { color: colors.lineDim, fontSize: 16, marginTop: 12 },
+  title: { color: colors.text, fontSize: 28, fontWeight: '800', marginBottom: 8 },
+  label: { color: colors.textSoft, fontSize: 16, marginTop: 12 },
   input: {
-    backgroundColor: colors.inkSoft,
+    backgroundColor: colors.card,
     borderRadius: radius,
     minHeight: touch,
     paddingHorizontal: 16,
-    color: colors.line,
+    color: colors.text,
     fontSize: 20,
   },
   choice: { flexDirection: 'row', gap: 16 },
@@ -160,14 +160,14 @@ const styles = StyleSheet.create({
     minHeight: touch,
     borderRadius: radius,
     borderWidth: 2,
-    borderColor: colors.line,
+    borderColor: colors.text,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 8,
   },
-  optionSelected: { backgroundColor: colors.line },
-  optionText: { color: colors.line, fontSize: 18, fontWeight: '700', textAlign: 'center' },
-  optionTextSelected: { color: colors.ink },
-  hint: { color: colors.lineDim, fontSize: 14 },
+  optionSelected: { backgroundColor: colors.text },
+  optionText: { color: colors.text, fontSize: 18, fontWeight: '700', textAlign: 'center' },
+  optionTextSelected: { color: colors.onAccent },
+  hint: { color: colors.textSoft, fontSize: 14 },
   footer: { padding: 24 },
 });

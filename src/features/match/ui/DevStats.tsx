@@ -48,16 +48,16 @@ export function DevStats({
 }
 
 const styles = StyleSheet.create({
-  stats: { backgroundColor: colors.inkSoft, borderRadius: radius, padding: 12, gap: 4 },
-  text: { color: colors.lineDim, fontSize: 13, fontVariant: ['tabular-nums'] },
+  stats: { backgroundColor: colors.card, borderRadius: radius, padding: 12, gap: 4 },
+  text: { color: colors.textSoft, fontSize: 13, fontVariant: ['tabular-nums'] },
   toggle: {
     alignSelf: 'flex-start',
     borderWidth: 1,
-    borderColor: colors.lineDim,
+    borderColor: colors.textSoft,
     borderRadius: radius,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
-  toggleOn: { backgroundColor: colors.ball, borderColor: colors.ball },
-  toggleTextOn: { color: colors.ink },
+  toggleOn: { backgroundColor: colors.accent, borderColor: colors.accent },
+  toggleTextOn: { color: colors.onAccent },
 });

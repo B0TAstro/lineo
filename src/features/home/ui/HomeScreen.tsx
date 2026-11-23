@@ -30,11 +30,11 @@ export function HomeScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.bg,
     paddingHorizontal: 24,
     justifyContent: 'space-between',
   },
   header: { marginTop: 48, gap: 8 },
-  title: { color: colors.line, fontSize: 56, fontWeight: '800' },
+  title: { color: colors.text, fontSize: 56, fontWeight: '800' },
   actions: { gap: 16, marginBottom: 48 },
 });

@@ -26,9 +26,9 @@ export function PendingBanner({
 }
 
 const styles = StyleSheet.create({
-  banner: { backgroundColor: colors.inkSoft, borderRadius: radius, padding: 16, gap: 8 },
-  title: { color: colors.line, fontSize: 26, fontWeight: '800' },
-  detail: { color: colors.lineDim, fontSize: 18 },
+  banner: { backgroundColor: colors.card, borderRadius: radius, padding: 16, gap: 8 },
+  title: { color: colors.text, fontSize: 26, fontWeight: '800' },
+  detail: { color: colors.textSoft, fontSize: 18 },
   row: { flexDirection: 'row', gap: 16, marginTop: 4 },
   button: { flex: 1 },
 });

@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  navText: { color: colors.line, fontSize: 22, fontWeight: '900' },
-  on: { backgroundColor: colors.line },
+  navText: { color: colors.text, fontSize: 22, fontWeight: '900' },
+  on: { backgroundColor: colors.text },
   dim: { opacity: 0.3 },
 });

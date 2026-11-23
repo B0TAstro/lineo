@@ -172,10 +172,10 @@ export function MatchScreen({ session }: { session: MatchSession }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.ink },
+  container: { flex: 1, backgroundColor: colors.bg },
   safe: { flex: 1, flexDirection: 'row', padding: 12, gap: 16 },
   side: { width: 220, gap: 10, justifyContent: 'center' },
   middle: { flex: 1 },
   board: { flex: 1, justifyContent: 'center', gap: 12 },
-  heard: { color: colors.lineDim, fontSize: 18, textAlign: 'center' },
+  heard: { color: colors.textSoft, fontSize: 18, textAlign: 'center' },
 });

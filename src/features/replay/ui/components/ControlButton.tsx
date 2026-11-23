@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  on: { backgroundColor: colors.line },
-  controlText: { color: colors.line, fontSize: 18, fontWeight: '700' },
-  controlTextOn: { color: colors.ink },
+  on: { backgroundColor: colors.text },
+  controlText: { color: colors.text, fontSize: 18, fontWeight: '700' },
+  controlTextOn: { color: colors.onAccent },
 });
