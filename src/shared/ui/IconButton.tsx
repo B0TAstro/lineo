@@ -1,10 +1,7 @@
-import { Ionicons } from '@expo/vector-icons';
-import type { ComponentProps } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 
+import { Icon, type IconName } from './Icon';
 import { colors, radius } from './theme';
-
-export type IconName = ComponentProps<typeof Ionicons>['name'];
 
 /** A small square button for a setting, out of the way of the match buttons */
 export function IconButton({
@@ -24,7 +21,7 @@ export function IconButton({
       hitSlop={8}
       style={({ pressed }) => [styles.tool, pressed && styles.pressed]}
     >
-      <Ionicons name={icon} size={24} color={colors.text} />
+      <Icon name={icon} />
     </Pressable>
   );
 }

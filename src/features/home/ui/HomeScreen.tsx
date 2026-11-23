@@ -19,7 +19,7 @@ export function HomeScreen() {
         <Button label="Créer une session" onPress={() => router.push('/create')} />
         <Button
           label="Rejoindre une session"
-          variant="outline"
+          variant="secondary"
           onPress={() => router.push('/join')}
         />
       </View>

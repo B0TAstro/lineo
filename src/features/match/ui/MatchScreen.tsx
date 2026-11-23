@@ -70,7 +70,7 @@ export function MatchScreen({ session }: { session: MatchSession }) {
       <MessageScreen
         message={camera.facing === 'front' ? 'Aucune caméra avant.' : 'Aucune caméra arrière.'}
       >
-        <Button label="Changer de caméra" variant="outline" onPress={camera.flip} />
+        <Button label="Changer de caméra" variant="secondary" onPress={camera.flip} />
       </MessageScreen>
     );
   }

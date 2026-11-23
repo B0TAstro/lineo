@@ -68,20 +68,20 @@ export function MatchSidebar({
         {VOICE_LABEL[voiceStatus]}
       </Text>
       <View style={styles.tools}>
-        {onInvite && <IconButton icon="qr-code" label="Inviter un téléphone" onPress={onInvite} />}
+        {onInvite && <IconButton icon="qr" label="Inviter un téléphone" onPress={onInvite} />}
         <IconButton
-          icon="camera-reverse"
+          icon="cameraSwitch"
           label={
             camera.facing === 'back' ? 'Passer à la caméra avant' : 'Passer à la caméra arrière'
           }
           onPress={camera.flip}
         />
         <IconButton
-          icon={voiceOn ? 'mic' : 'mic-off'}
+          icon={voiceOn ? 'mic' : 'micOff'}
           label={voiceOn ? 'Couper la voix' : 'Activer la voix'}
           onPress={onToggleVoice}
         />
-        <IconButton icon="exit-outline" label="Quitter le match" onPress={onLeave} />
+        <IconButton icon="exit" label="Quitter le match" onPress={onLeave} />
       </View>
     </>
   );

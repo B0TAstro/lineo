@@ -62,7 +62,7 @@ export function MatchControls({
       />
       <Button
         label="Annuler le point"
-        variant="outline"
+        variant="secondary"
         onPress={undo}
         disabled={pending !== undefined || points.length === 0}
         style={styles.action}

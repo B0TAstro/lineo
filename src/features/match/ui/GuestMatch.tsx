@@ -19,7 +19,7 @@ export function GuestMatch({ sessionId, sessionKey }: { sessionId: string; sessi
         }
         hint="Gardez les deux téléphones proches avec le Bluetooth activé."
       >
-        <Button label="Annuler" variant="outline" onPress={() => router.replace('/')} />
+        <Button label="Annuler" variant="secondary" onPress={() => router.replace('/')} />
       </MessageScreen>
     );
   }

@@ -1,26 +1,28 @@
-import { Pressable, StyleSheet, Text, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 
-import { colors, radius, touch } from './theme';
+import { Icon, type IconName } from './Icon';
+import { borderWidth, colors, fonts, radius, touch, type } from './theme';
 
-type Variant = 'primary' | 'outline' | 'var' | 'soft';
+type Variant = 'primary' | 'secondary' | 'var' | 'ghost';
 
-/** Large match button: 64 pt minimum, readable with a sweaty thumb */
+/** A full button, 64 pt high: readable with a sweaty thumb */
 export function Button({
   label,
-  detail,
+  icon,
   onPress,
   variant = 'primary',
   disabled,
   style,
 }: {
   label: string;
-  detail?: string;
+  icon?: IconName;
   onPress: () => void;
   variant?: Variant;
   disabled?: boolean;
   style?: ViewStyle;
 }) {
   const onAccent = variant === 'primary' || variant === 'var';
+  const color = onAccent ? colors.onAccent : colors.text;
   return (
     <Pressable
       onPress={onPress}
@@ -34,30 +36,28 @@ export function Button({
         style,
       ]}
     >
-      <Text style={[styles.label, onAccent && styles.labelOnAccent]}>{label}</Text>
-      {detail != null && (
-        <Text style={[styles.detail, onAccent && styles.labelOnAccent]}>{detail}</Text>
-      )}
+      <View style={styles.content}>
+        {icon && <Icon name={icon} color={color} />}
+        <Text style={[styles.label, variant === 'var' && styles.labelVar, { color }]}>{label}</Text>
+      </View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: touch + 16,
+    minHeight: touch,
     borderRadius: radius,
     paddingHorizontal: 20,
-    paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 2,
   },
   primary: { backgroundColor: colors.accent },
-  outline: { borderWidth: 2, borderColor: colors.text },
+  secondary: { borderWidth, borderColor: colors.borderStrong },
   var: { backgroundColor: colors.accent },
-  soft: { backgroundColor: colors.card },
+  ghost: { backgroundColor: colors.card, borderWidth, borderColor: colors.borderFaint },
   dim: { opacity: 0.4 },
-  label: { color: colors.text, fontSize: 22, fontWeight: '800', textAlign: 'center' },
-  labelOnAccent: { color: colors.onAccent },
-  detail: { color: colors.textSoft, fontSize: 16, textAlign: 'center' },
+  content: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  label: { ...type.button, textAlign: 'center' },
+  labelVar: { fontFamily: fonts.semibold },
 });

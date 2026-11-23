@@ -19,7 +19,7 @@ export function PendingBanner({
       <Text style={styles.detail}>L’autre camp valide.</Text>
       <View style={styles.row}>
         <Button label="Valider" onPress={onConfirm} style={styles.button} />
-        <Button label="Refuser" variant="outline" onPress={onReject} style={styles.button} />
+        <Button label="Refuser" variant="secondary" onPress={onReject} style={styles.button} />
       </View>
     </View>
   );

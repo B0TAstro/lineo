@@ -26,7 +26,7 @@ export function InviteOverlay({
         <Text style={styles.title}>Scannez pour rejoindre</Text>
         <Text style={styles.code}>Session {sessionId}</Text>
         <Text style={styles.hint}>Sur l’autre téléphone : Lineo › Rejoindre une session</Text>
-        <Button label="Fermer" variant="outline" onPress={onClose} />
+        <Button label="Fermer" variant="secondary" onPress={onClose} />
       </View>
     </View>
   );

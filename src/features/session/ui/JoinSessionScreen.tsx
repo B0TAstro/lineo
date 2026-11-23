@@ -78,7 +78,7 @@ export function JoinSessionScreen() {
           {invalid ? 'Ce n’est pas un code de session Lineo.' : 'Affiché sur l’écran de match.'}
         </Text>
         <View style={styles.frame} />
-        <Button label="Annuler" variant="outline" onPress={() => router.back()} />
+        <Button label="Annuler" variant="secondary" onPress={() => router.back()} />
       </SafeAreaView>
     </View>
   );
