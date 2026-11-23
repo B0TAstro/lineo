@@ -83,7 +83,7 @@ export function CreateSessionScreen() {
           options={[
             { value: 'grass', label: 'Gazon' },
             { value: 'hard', label: 'Dur' },
-            { value: 'clay', label: 'Terre battue' },
+            { value: 'dirt', label: 'Terre battue' },
           ]}
           value={form.court.surface}
           onChange={(surface) => update({ court: { ...form.court, surface } })}

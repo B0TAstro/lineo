@@ -20,8 +20,8 @@ function opponent(state: MatchState, side: SideId): SideId {
 }
 
 /**
- * Closes a game: banks it, and cascades into set and match if that is what it
- * turns out to be. Shared by the normal game path and the tie-break.
+ * Closes a game: banks it, and cascades into set and match if that is what it turns out to be.
+ * Shared by the normal game path and the tie-break
  */
 function afterGame(state: MatchState, winner: SideId): MatchState {
   const loser = opponent(state, winner);
@@ -31,18 +31,12 @@ function afterGame(state: MatchState, winner: SideId): MatchState {
 
   const won = games[winner] as number;
   const lost = games[loser] as number;
-  // A tie-break is won 7-6, so one game clear is enough when it decided the set. A match
-  // tie-break is the whole deciding set on its own.
   const setWon =
     state.tieBreak?.isSuper === true ||
     (won >= gamesToWinSet && (won - lost >= 2 || state.tieBreak !== undefined));
 
-  // After a tie-break the starter receives first in the next set, which is
-  // exactly what normal alternation gives: the tie-break counts as one game.
   const nextServer = opponent(state, state.tieBreak?.starter ?? state.server);
-  // The key is dropped, not set to undefined: the tie-break is over.
   const { tieBreak: _over, ...carried } = state;
-  // Ends change after every odd game of the set, the tie-break counting as one game (7-6 = 13).
   const endsSwapped = (won + lost) % 2 === 1 ? !state.endsSwapped : state.endsSwapped;
   const base = { ...carried, server: nextServer, endsSwapped };
 
@@ -60,7 +54,6 @@ function afterGame(state: MatchState, winner: SideId): MatchState {
 
   const sets = { ...state.sets, [winner]: (state.sets[winner] as number) + 1 };
   const matchWon = (sets[winner] as number) >= setsToWinMatch;
-  // One set all (in best of three): the deciding set is a match tie-break, if the format says so.
   const decidingSet = sets[winner] === setsToWinMatch - 1 && sets[loser] === setsToWinMatch - 1;
   return {
     ...base,
@@ -100,7 +93,6 @@ function applyTieBreakPoint(state: MatchState, winner: SideId): MatchState {
   const won = points[winner] as number;
   const lost = points[loser] as number;
   if (won >= tieBreak.target && won - lost >= 2) {
-    // A tie-break counts as one game: it closes the set at 7-6, or the match tie-break at 1-0.
     return afterGame({ ...state, tieBreak: { ...tieBreak, points } }, winner);
   }
 
@@ -108,7 +100,6 @@ function applyTieBreakPoint(state: MatchState, winner: SideId): MatchState {
     ...state,
     server: tieBreakServer(state, tieBreak.starter, won + lost),
     tieBreak: { ...tieBreak, points },
-    // Inside a tie-break, ends change every six points.
     endsSwapped: (won + lost) % 6 === 0 ? !state.endsSwapped : state.endsSwapped,
   };
 }
@@ -131,12 +122,10 @@ export function applyPoint(state: MatchState, winner: SideId): MatchState {
     return afterGame(state, winner);
   }
 
-  // Scoring against the opponent's advantage: back to deuce.
   if (theirs === 'AD') {
     return { ...state, points: { [winner]: 40, [loser]: 40 } };
   }
 
-  // Scoring at deuce: take the advantage.
   if (mine === 40 && theirs === 40) {
     return { ...state, points: { ...state.points, [winner]: 'AD' } };
   }

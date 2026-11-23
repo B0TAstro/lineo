@@ -1,12 +1,4 @@
 #!/usr/bin/env bash
-# Dev only: copies test videos into the app's Documents on the plugged iPhone, for the replay's
-# "Vidéos test" (ball tracking on real matches, without filming them). Nothing goes in the build.
-#
-#   npm run dev:videos                       # dev-videos/ (git-ignored)
-#   npm run dev:videos -- ~/some/folder      # any folder of .mp4 / .mov
-#   DEVICE="iPhone Tom" npm run dev:videos   # pick the phone when several are plugged
-#
-# iOS only (xcrun devicectl). Needs ffprobe (brew install ffmpeg) for each video's length and fps.
 set -euo pipefail
 export LC_NUMERIC=C
 
@@ -34,8 +26,6 @@ if [ -z "$DEVICE" ]; then
   exit 1
 fi
 
-# index.json: what the app lists, with each video's length (the replay's timeline) and frame rate
-# (frame by frame)
 entries=()
 shopt -s nullglob nocaseglob
 for video in "$SOURCE"/*.mp4 "$SOURCE"/*.mov; do

@@ -1,6 +1,6 @@
 /**
  * Ball detection and tracking settings, measured on a match filmed from behind the baseline
- * (1280 px wide, `scripts/bench`): there the ball is 2 to 10 px wide, among a crowd, players in
+ * (1280 px wide): there the ball is 2 to 10 px wide, among a crowd, players in
  * yellow shoes and their shadows. The POC's settings (configs/ball.yaml) were a starting point
  * for a ball 30 cm from a webcam, and find nothing there.
  *
@@ -40,6 +40,7 @@ export const BALL_CONFIG = {
    * larger one: a spectator in yellow is not taken for the ball.
    */
   maxMoverSide: 0.04,
+  // Live tracking (dev only): the frame-by-frame `BallTracker`
   /**
    * A track starts on two blobs one frame apart, this far apart (of the frame width): enough to
    * be moving, not so far that two unrelated blobs make a track.
@@ -62,11 +63,9 @@ export const BALL_CONFIG = {
   initialCovariance: 10,
   /** Frames the ball may be missing (hidden, too blurred) before the track is dropped. */
   maxMissedFrames: 8,
-  /**
-   * Replay: the path is found on all the frames at once, as arcs of free flight (`trackClip`).
-   * Speeds in frame widths per second, distances in frame widths, so they hold at any resolution
-   * and frame rate.
-   */
+  // Replay: the path is found on all the frames at once, as arcs of free flight (`trackClip`).
+  // Speeds in frame widths per second, distances in frame widths: they hold at any resolution and
+  // frame rate.
   /**
    * A blob with others within this distance, on this share of the frames of this time span,
    * stays there (a foot, a leaf, a spectator): the ball only passes.
@@ -109,5 +108,5 @@ export const BALL_CONFIG = {
   velocityScale: 0.15,
 } as const;
 
-/** The same settings with any value: what a court changes (`ballConfigFor`), what a test tries. */
+/** The same settings with any value: what a court changes (`ballConfigFor`). */
 export type BallConfig = { readonly [Setting in keyof typeof BALL_CONFIG]: number };

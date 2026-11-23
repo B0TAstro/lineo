@@ -25,9 +25,10 @@ export type LiveBallState = {
 const EMPTY: LiveBallState = { trail: [], frames: 0, seen: 0, t: 0, ms: 0, frame: undefined };
 
 /**
- * Dev builds only: the replay's ball tracking, run on the camera as it films, to tune the colour
- * and the sizes on a real court. Same detector, same tracker. The camera sends a frame only when
- * the previous one is done, so the rate follows what the phone can do.
+ * Dev builds only: the replay's detector, run on the camera as it films, to tune the detection on
+ * a real court. The camera does not know what comes next, so it uses the frame-by-frame tracker
+ * (`BallTracker`), not the replay's arcs. The camera sends a frame only when the previous one is
+ * done, so the rate follows what the phone can do.
  */
 export class LiveBallTracker {
   readonly store = new Store<LiveBallState>(EMPTY);

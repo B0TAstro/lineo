@@ -3,8 +3,8 @@ import type { MatchSetup } from '@/sports/tennis';
 import { isValid, type LoggedEvent, type MatchEvent, replayLog } from './matchLog';
 
 /**
- * The host's side of the protocol: the one log of the session. Every change, the host's own as its guests' intents,
- * takes the same path: checked against the latest log, then numbered
+ * The host's side of the protocol: the one log of the session. Every change, the host's own as
+ * its guests' intents, takes the same path: checked against the latest log, then numbered
  */
 export class HostLog {
   private log: LoggedEvent[] = [];

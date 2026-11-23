@@ -94,7 +94,7 @@ Tout est dans `src/features/ball-tracking/`.
 | `logic/ballConfig.ts`, `logic/ballConfigFor.ts` | Les réglages, et ce qu'un terrain y change |
 | `ui/BallTrackOverlay.tsx`, `ui/BallHud.tsx` | Étape 4 : le calque et le bandeau |
 
-`logic/` est du TypeScript pur, testé sans téléphone (`npm test`), y compris sur les candidats d'un vrai échange. `scripts/bench/` rejoue la détection et le suivi sur une vidéo depuis le Mac.
+Tout tourne sur le téléphone. `logic/` est du TypeScript pur : il ne dépend ni de React ni d'OpenCV.
 
 ## Quand le dessin ne colle pas à la balle
 
