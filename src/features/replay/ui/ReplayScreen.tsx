@@ -1,14 +1,13 @@
 import { lockAsync, OrientationLock } from 'expo-screen-orientation';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors } from '@/shared/ui/theme';
+import { colors, fonts } from '@/shared/ui/theme';
 import type { Court } from '@/sports/tennis';
 
 import { ClipPlayer, type VideoOrientation } from './ClipPlayer';
-import { ControlButton } from './components/ControlButton';
-import { NavButton } from './components/NavButton';
-import { OutcomeBar, type Side } from './components/OutcomeBar';
+import { DecisionPanel, type Side } from './components/DecisionPanel';
+import type { PointNav } from './components/PlayerTopBar';
 import type { ReplayOutcome } from '../logic/outcome';
 import type { ReplayClip } from '../logic/toReplayClips';
 import { loadDevVideos } from '../native/loadDevVideos';
@@ -70,34 +69,17 @@ export function ReplayScreen({
     });
   };
 
-  const header = (
-    <View style={styles.header}>
-      <View style={styles.nav}>
-        <NavButton label="◀" disabled={index === 0} onPress={() => setIndex(index - 1)} />
-        <View style={styles.navText}>
-          <Text style={styles.navSubtitle} numberOfLines={1}>
-            {clip.subtitle} · {index + 1}/{shown.length}
-          </Text>
-          <Text style={styles.navTitle} numberOfLines={2}>
-            {clip.title}
-          </Text>
-        </View>
-        <NavButton
-          label="▶"
-          disabled={index === shown.length - 1}
-          onPress={() => setIndex(index + 1)}
-        />
-      </View>
-      {__DEV__ && (
-        <View style={styles.row}>
-          <ControlButton
-            label={devClips ? 'Points du match' : 'Vidéos test'}
-            onPress={toggleDevVideos}
-          />
-        </View>
-      )}
-    </View>
-  );
+  const point: PointNav = {
+    section: `${clip.subtitle} · ${index + 1}/${shown.length}`,
+    title: clip.title,
+    onPrevious: index > 0 ? () => setIndex(index - 1) : undefined,
+    onNext: index < shown.length - 1 ? () => setIndex(index + 1) : undefined,
+  };
+  const devSwitch = __DEV__ ? (
+    <Pressable onPress={toggleDevVideos} style={styles.dev}>
+      <Text style={styles.devText}>{devClips ? 'Points du match' : 'Vidéos test'}</Text>
+    </Pressable>
+  ) : undefined;
 
   return (
     <ClipPlayer
@@ -105,9 +87,15 @@ export function ReplayScreen({
       segments={clip.segments}
       fps={clip.fps ?? fps}
       court={court}
-      header={header}
-      // A test video is not a point of the match: nothing to decide
-      footer={devClips ? null : <OutcomeBar sides={sides} onOutcome={onOutcome} />}
+      point={point}
+      renderPanel={(close) =>
+        // A test video is not a point of the match: nothing to decide
+        devClips ? (
+          <View style={styles.devPanel}>{devSwitch}</View>
+        ) : (
+          <DecisionPanel sides={sides} onOutcome={onOutcome} onClose={close} footer={devSwitch} />
+        )
+      }
       onVideoOrientation={setOrientation}
       onClose={onClose}
     />
@@ -115,10 +103,7 @@ export function ReplayScreen({
 }
 
 const styles = StyleSheet.create({
-  header: { gap: 8 },
-  nav: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  navText: { flexShrink: 1, flexGrow: 1 },
-  navSubtitle: { color: colors.accent, fontSize: 16, fontWeight: '800' },
-  navTitle: { color: colors.text, fontSize: 18, fontWeight: '800' },
-  row: { flexDirection: 'row' },
+  dev: { marginTop: 16, alignSelf: 'flex-start' },
+  devText: { fontFamily: fonts.light, fontSize: 13, color: colors.textDim },
+  devPanel: { padding: 16 },
 });

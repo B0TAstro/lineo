@@ -4,6 +4,7 @@ import {
   GestureDetector,
   usePanGesture,
   usePinchGesture,
+  useExclusiveGestures,
   useSimultaneousGestures,
   useTapGesture,
 } from 'react-native-gesture-handler';
@@ -11,8 +12,11 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-na
 
 const MAX_SCALE = 6;
 
-/** Pinch to zoom, drag to pan while zoomed, double tap to reset. Runs on the UI thread. */
-export function ZoomableView({ children }: { children: ReactNode }) {
+/**
+ * Pinch to zoom, drag to pan while zoomed, double tap to reset. Runs on the UI thread. A single
+ * tap (`onTap`, on the JS thread) waits until it cannot be a double tap
+ */
+export function ZoomableView({ children, onTap }: { children: ReactNode; onTap?: () => void }) {
   const scale = useSharedValue(1);
   const savedScale = useSharedValue(1);
   const translateX = useSharedValue(0);
@@ -61,7 +65,14 @@ export function ZoomableView({ children }: { children: ReactNode }) {
     },
   });
 
-  const gesture = useSimultaneousGestures(pinch, pan, doubleTap);
+  const singleTap = useTapGesture({
+    runOnJS: true,
+    enabled: onTap !== undefined,
+    onActivate: () => onTap?.(),
+  });
+
+  const taps = useExclusiveGestures(doubleTap, singleTap);
+  const gesture = useSimultaneousGestures(pinch, pan, taps);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [

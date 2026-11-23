@@ -15,7 +15,7 @@ import { Button } from '@/shared/ui/Button';
 import { IconButton } from '@/shared/ui/IconButton';
 import { MessageScreen } from '@/shared/ui/MessageScreen';
 import { colors, fonts, space } from '@/shared/ui/theme';
-import { setScores, type SideId, sideName, toMatchSetup } from '@/sports/tennis';
+import { roleLabel, setScores, type SideId, sideName, toMatchSetup } from '@/sports/tennis';
 
 import { DevStats } from './DevStats';
 import { MatchControls } from './MatchControls';
@@ -217,8 +217,8 @@ export function MatchScreen({ session }: { session: MatchSession }) {
           fps={camera.selectedFps ?? TARGET_FPS}
           court={session.form.court}
           sides={[
-            { id: a.id, name: sideName(state, a.id) },
-            { id: b.id, name: sideName(state, b.id) },
+            { id: a.id, name: sideName(state, a.id), role: roleLabel(state, a.id) },
+            { id: b.id, name: sideName(state, b.id), role: roleLabel(state, b.id) },
           ]}
           // The players decided: the outcome goes to the log, then every phone goes back to the score
           onOutcome={(outcome) => outcomeEvents(view, outcome).forEach(dispatch)}
