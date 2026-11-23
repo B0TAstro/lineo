@@ -1,90 +1,172 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors } from '@/shared/ui/theme';
-import { type MatchState, pointText, roleLabel, sideName } from '@/sports/tennis';
+import { Icon, type IconName } from '@/shared/ui/Icon';
+import { ServeDot } from '@/shared/ui/ServeDot';
+import { colors, fonts, type } from '@/shared/ui/theme';
+import { type MatchState, pointText, type SetScore, sideName, type SideId } from '@/sports/tennis';
 
-/** The match screen's score: readable from a distance, nothing else */
-export function ScoreDisplay({ state }: { state: MatchState }) {
+/** The point buttons next to each name: + proposes the point, − takes back the last one */
+export type PointControls = {
+  canAdd: boolean;
+  canRemove: (side: SideId) => boolean;
+  onAdd: (side: SideId) => void;
+  onRemove: (side: SideId) => void;
+};
+
+/** The match screen's score: the points, readable from a distance, and the games of every set */
+export function ScoreDisplay({
+  state,
+  sets,
+  teams,
+  controls,
+}: {
+  state: MatchState;
+  /** Finished sets, oldest first */
+  sets: SetScore[];
+  /** UI only: the players of each team in doubles, shown under its name */
+  teams: Record<SideId, string[]> | undefined;
+  controls: PointControls;
+}) {
   const [a, b] = state.config.sides;
+  const current: SetScore = { [a.id]: state.games[a.id] ?? 0, [b.id]: state.games[b.id] ?? 0 };
 
-  return (
-    <View style={styles.screen}>
-      <View style={styles.points}>
-        {[a, b].map((side) => (
-          <View key={side.id} style={styles.column}>
-            <Text style={styles.name} numberOfLines={1}>
-              {sideName(state, side.id)}
-            </Text>
-            <View style={styles.roleRow}>
-              {state.server === side.id && <View style={styles.ball} />}
-              <Text style={styles.role}>{roleLabel(state, side.id)}</Text>
-            </View>
-            <Text style={styles.point} numberOfLines={1} adjustsFontSizeToFit>
-              {pointText(state, side.id)}
+  const side = (id: SideId) => {
+    const serving = state.server === id && state.matchWonBy === undefined;
+    const players = teams?.[id];
+    return (
+      <View style={styles.side}>
+        <View style={styles.nameRow}>
+          <PointButton
+            icon="minus"
+            label={`Retirer le dernier point de ${sideName(state, id)}`}
+            disabled={!controls.canRemove(id)}
+            onPress={() => controls.onRemove(id)}
+          />
+          <View style={styles.name}>
+            {serving && !players && <ServeDot size={10} />}
+            <Text style={styles.nameText} numberOfLines={1}>
+              {sideName(state, id)}
             </Text>
           </View>
-        ))}
-      </View>
-
-      {state.tieBreak !== undefined && (
-        <Text style={styles.badge}>{state.tieBreak.isSuper ? 'SUPER TIE-BREAK' : 'TIE-BREAK'}</Text>
-      )}
-
-      <View style={styles.counters}>
-        <View style={styles.counter}>
-          <Text style={styles.counterLabel}>Jeux</Text>
-          <Text style={styles.counterValue}>
-            {state.games[a.id]} — {state.games[b.id]}
-          </Text>
+          <PointButton
+            icon="plus"
+            label={`Point pour ${sideName(state, id)}`}
+            disabled={!controls.canAdd}
+            onPress={() => controls.onAdd(id)}
+          />
         </View>
-        <View style={styles.counter}>
-          <Text style={styles.counterLabel}>Sets</Text>
-          <Text style={styles.counterValue}>
-            {state.sets[a.id]} — {state.sets[b.id]}
-          </Text>
-        </View>
+        {players && players.length > 0 && (
+          <View style={styles.players}>
+            {serving && <ServeDot size={6} />}
+            <Text style={styles.playersText} numberOfLines={1}>
+              {players.join(' · ')}
+            </Text>
+          </View>
+        )}
+        <Text style={styles.point} numberOfLines={1} adjustsFontSizeToFit>
+          {pointText(state, id)}
+        </Text>
       </View>
+    );
+  };
 
-      {state.matchWonBy !== undefined && (
-        <Text style={styles.over}>Match terminé · {sideName(state, state.matchWonBy)}</Text>
-      )}
+  return (
+    <View style={styles.board}>
+      {side(a.id)}
+      <View style={styles.sets}>
+        {[...sets, current].map((set, i) => {
+          const live = i === sets.length && state.matchWonBy === undefined;
+          return (
+            <View key={i} style={styles.setRow}>
+              <Text style={[styles.games, live && styles.gamesLive]}>{set[a.id]}</Text>
+              <Text style={styles.dot}>·</Text>
+              <Text style={[styles.games, live && styles.gamesLive]}>{set[b.id]}</Text>
+            </View>
+          );
+        })}
+        <Text style={styles.setLabel}>{setLabel(state, sets.length)}</Text>
+      </View>
+      {side(b.id)}
     </View>
   );
 }
 
+function setLabel(state: MatchState, finished: number): string {
+  if (state.matchWonBy !== undefined) return 'Match terminé';
+  if (state.tieBreak?.isSuper) return 'Super tie-break';
+  if (state.tieBreak !== undefined) return 'Tie-break';
+  return `Set ${finished + 1}`;
+}
+
+function PointButton({
+  icon,
+  label,
+  disabled,
+  onPress,
+}: {
+  icon: IconName;
+  label: string;
+  disabled: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      hitSlop={10}
+      style={({ pressed }) => [
+        styles.pointButton,
+        icon === 'minus' && styles.pointButtonMinus,
+        (pressed || disabled) && styles.pointButtonDim,
+      ]}
+    >
+      <Icon name={icon} size={16} />
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
-  screen: { gap: 24 },
-  points: { flexDirection: 'row' },
-  column: { flex: 1, alignItems: 'center', gap: 4 },
-  name: { color: colors.text, fontSize: 22, fontWeight: '700' },
-  roleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  ball: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.accent },
-  role: { color: colors.textSoft, fontSize: 16 },
-  point: {
+  board: { flexDirection: 'row', alignItems: 'flex-start' },
+  side: { flex: 1, alignItems: 'center' },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  name: { flexDirection: 'row', alignItems: 'center', gap: 8, maxWidth: 180 },
+  nameText: {
+    fontFamily: fonts.medium,
+    fontSize: 20,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
     color: colors.text,
-    fontSize: 112,
-    fontWeight: '800',
-    fontVariant: ['tabular-nums'],
   },
-  badge: {
-    alignSelf: 'center',
-    color: colors.onAccent,
-    backgroundColor: colors.accent,
-    fontSize: 16,
-    fontWeight: '800',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 999,
-    overflow: 'hidden',
+  players: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
+  playersText: { fontFamily: fonts.light, fontSize: 12, color: colors.textDim },
+  point: { ...type.score, color: colors.text, marginTop: 6 },
+  pointButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.22)',
+    backgroundColor: colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  counters: { flexDirection: 'row', justifyContent: 'center', gap: 48 },
-  counter: { alignItems: 'center', gap: 2 },
-  counterLabel: { color: colors.textSoft, fontSize: 16 },
-  counterValue: {
-    color: colors.text,
+  pointButtonMinus: { opacity: 0.7 },
+  pointButtonDim: { opacity: 0.3 },
+  sets: { alignItems: 'center', gap: 2, paddingTop: 46 },
+  setRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  games: {
+    fontFamily: fonts.regular,
     fontSize: 40,
-    fontWeight: '700',
+    color: 'rgba(255,255,255,0.4)',
     fontVariant: ['tabular-nums'],
   },
-  over: { color: colors.accent, fontSize: 20, fontWeight: '700', textAlign: 'center' },
+  gamesLive: { color: colors.text },
+  dot: { fontFamily: fonts.regular, fontSize: 32, color: 'rgba(255,255,255,0.25)' },
+  setLabel: {
+    ...type.section,
+    letterSpacing: 1.82,
+    color: colors.accent,
+  },
 });

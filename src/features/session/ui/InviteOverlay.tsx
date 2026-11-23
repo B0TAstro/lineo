@@ -35,7 +35,7 @@ export function InviteOverlay({
   return (
     <SafeAreaView style={styles.overlay}>
       <View style={styles.text}>
-        <IconButton icon="close" label="Fermer" plain onPress={onClose} />
+        <IconButton icon="close" label="Fermer" variant="plain" onPress={onClose} />
         <View style={styles.body}>
           <ScreenTitle section="Session" title="Ajouter un téléphone" />
           <Text style={styles.how}>

@@ -70,7 +70,7 @@ export function JoinSessionScreen() {
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.header}>
-        <IconButton icon="close" label="Fermer" plain onPress={() => router.back()} />
+        <IconButton icon="close" label="Fermer" variant="plain" onPress={() => router.back()} />
       </View>
       <View style={styles.content}>
         <ScreenTitle section="Session" title="Rejoindre" />

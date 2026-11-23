@@ -37,7 +37,13 @@ export const fonts = {
 
 /** The 5 text styles of the design system */
 export const type = {
-  score: { fontFamily: fonts.thin, fontSize: 160, fontVariant: ['tabular-nums'] },
+  score: {
+    fontFamily: fonts.regular,
+    fontSize: 200,
+    lineHeight: 192,
+    letterSpacing: -12,
+    fontVariant: ['tabular-nums'],
+  },
   title: { fontFamily: fonts.light, fontSize: 32, letterSpacing: -0.64 },
   button: { fontFamily: fonts.medium, fontSize: 20 },
   body: { fontFamily: fonts.light, fontSize: 16 },

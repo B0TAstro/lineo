@@ -12,6 +12,8 @@ export type SetupForm = {
   firstServer: 'A' | 'B';
   /** Not for the score: every phone of the session sets its ball detection from it */
   court: Court;
+  /** UI only: doubles are not scored yet, the players of each team are only shown under its name */
+  teams?: { A: string[]; B: string[] };
 };
 
 export const DEFAULT_FORM: SetupForm = {

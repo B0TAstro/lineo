@@ -46,8 +46,8 @@ export function CreateSessionScreen() {
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.header}>
-        <IconButton icon="back" label="Retour" plain onPress={back} />
-        <IconButton icon="close" label="Fermer" plain onPress={() => router.back()} />
+        <IconButton icon="back" label="Retour" variant="plain" onPress={back} />
+        <IconButton icon="close" label="Fermer" variant="plain" onPress={() => router.back()} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
@@ -197,6 +197,16 @@ function toForm(form: SetupForm, format: Format, doubles: DoublesDraft): SetupFo
     nameA: doubles.teams.A || 'Équipe A',
     nameB: doubles.teams.B || 'Équipe B',
     firstServer: server?.team ?? 'A',
+    teams: {
+      A: doubles.players
+        .filter((p) => p.team === 'A')
+        .map((p) => p.name)
+        .filter(Boolean),
+      B: doubles.players
+        .filter((p) => p.team === 'B')
+        .map((p) => p.name)
+        .filter(Boolean),
+    },
   };
 }
 

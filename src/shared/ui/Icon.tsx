@@ -19,6 +19,7 @@ import Fullscreen from '../../../assets/icons/fullscreen.svg';
 import Info from '../../../assets/icons/info.svg';
 import MicOff from '../../../assets/icons/mic-off.svg';
 import Mic from '../../../assets/icons/mic.svg';
+import Minus from '../../../assets/icons/minus.svg';
 import PanelClose from '../../../assets/icons/panel-close.svg';
 import PanelOpen from '../../../assets/icons/panel-open.svg';
 import Panel from '../../../assets/icons/panel.svg';
@@ -51,6 +52,7 @@ const ICONS = {
   info: Info,
   mic: Mic,
   micOff: MicOff,
+  minus: Minus,
   panel: Panel,
   panelClose: PanelClose,
   panelOpen: PanelOpen,

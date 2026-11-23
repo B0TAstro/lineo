@@ -1,9 +1,9 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/shared/ui/Button';
-import { colors, radius } from '@/shared/ui/theme';
+import { colors, fonts } from '@/shared/ui/theme';
 
-/** A proposed point, waiting for the other side to confirm it on the same screen */
+/** A proposed point, waiting for the other side to confirm it: it takes the place of Quitter and Pause */
 export function PendingBanner({
   winnerName,
   onConfirm,
@@ -15,20 +15,22 @@ export function PendingBanner({
 }) {
   return (
     <View style={styles.banner}>
-      <Text style={styles.title}>Point pour {winnerName} ?</Text>
-      <Text style={styles.detail}>L’autre camp valide.</Text>
-      <View style={styles.row}>
-        <Button label="Valider" onPress={onConfirm} style={styles.button} />
-        <Button label="Refuser" variant="secondary" onPress={onReject} style={styles.button} />
+      <View style={styles.text}>
+        <Text style={styles.title} numberOfLines={1}>
+          Point pour {winnerName} ?
+        </Text>
+        <Text style={styles.detail}>L’autre camp valide.</Text>
       </View>
+      <Button label="Refuser" variant="ghost" onPress={onReject} style={styles.button} />
+      <Button label="Valider" variant="secondary" onPress={onConfirm} style={styles.button} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  banner: { backgroundColor: colors.card, borderRadius: radius, padding: 16, gap: 8 },
-  title: { color: colors.text, fontSize: 26, fontWeight: '800' },
-  detail: { color: colors.textSoft, fontSize: 18 },
-  row: { flexDirection: 'row', gap: 16, marginTop: 4 },
-  button: { flex: 1 },
+  banner: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  text: { flex: 1 },
+  title: { fontFamily: fonts.medium, fontSize: 18, color: colors.text },
+  detail: { fontFamily: fonts.light, fontSize: 14, color: colors.textDim },
+  button: { minHeight: 60, width: 130 },
 });
