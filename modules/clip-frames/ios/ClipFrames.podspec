@@ -5,7 +5,7 @@ Pod::Spec.new do |s|
   s.description    = 'Decodes a time window of a video file into small upright RGB frames.'
   s.license        = 'UNLICENSED'
   s.author         = 'Lineo'
-  s.homepage       = 'https://github.com/B0TAstro/temoin'
+  s.homepage       = 'https://github.com/B0TAstro/lineo'
   s.platforms      = { :ios => '16.4' }
   s.swift_version  = '5.9'
   s.source         = { git: '' }

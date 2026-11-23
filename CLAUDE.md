@@ -2,7 +2,7 @@
 
 > Un tiers neutre dans la poche. Montrer plutôt que trancher.
 
-Anciennement **Témoin**. Gardés à l'ancien nom, car invisibles et coûteux à changer : l'identifiant de l'app (`com.tomboullay.temoin` : le changer installerait une deuxième app), les UUID Bluetooth (`gatt.ts`), les dossiers `temoin-poc-*` et le dépôt GitHub.
+**Historique** : **Témoin** était le nom du prototype (v0.0 à v0.5). Lineo est l'app finale, construite à partir de ce prototype. Seuls les dossiers des POC (`temoin-poc-*`) gardent l'ancien nom.
 
 ## Le projet
 

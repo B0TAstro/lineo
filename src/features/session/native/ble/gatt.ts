@@ -1,16 +1,15 @@
 /**
  * What Lineo looks like over Bluetooth. These UUIDs are the contract between phones, like
  * PROTOCOL_VERSION: every phone, iPhone or Android, must use the same ones. They are not secret:
- * any scan shows them (the last group spells "temoin", the app's first name, in hex: nobody
- * sees them, so they were kept through the rename).
+ * any scan shows them (the last group spells "lineo" in hex, after a leading 00).
  */
 
 /** Lineo's GATT service: one characteristic per direction. */
-export const SERVICE = '6b1c0001-6f74-4e1d-9a0b-74656d6f696e';
+export const SERVICE = '6b1c0001-6f74-4e1d-9a0b-006c696e656f';
 /** Guests write their messages here. */
-export const TO_HOST = '6b1c0002-6f74-4e1d-9a0b-74656d6f696e';
+export const TO_HOST = '6b1c0002-6f74-4e1d-9a0b-006c696e656f';
 /** The host notifies every guest here. */
-export const TO_GUESTS = '6b1c0003-6f74-4e1d-9a0b-74656d6f696e';
+export const TO_GUESTS = '6b1c0003-6f74-4e1d-9a0b-006c696e656f';
 
 /** UUIDs compare without case: the platforms do not report them the same way. */
 export const sameUuid = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();

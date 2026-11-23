@@ -9,7 +9,7 @@
     "userInterfaceStyle": "dark",
     "backgroundColor": "#111111",
     "ios": {
-      "bundleIdentifier": "com.tomboullay.temoin",
+      "bundleIdentifier": "com.tomboullay.lineo",
       "supportsTablet": false,
       "infoPlist": {
         "NSCameraUsageDescription": "Lineo filme le court point par point pour revoir un point contesté. La vidéo reste sur ce téléphone et est supprimée en fin de match."
@@ -17,7 +17,7 @@
       "appleTeamId": "8J5GF7NGYS"
     },
     "android": {
-      "package": "com.tomboullay.temoin",
+      "package": "com.tomboullay.lineo",
       "adaptiveIcon": {
         "backgroundColor": "#111111",
         "foregroundImage": "./assets/icon/android-icon-foreground.png",
