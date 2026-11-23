@@ -23,7 +23,7 @@ function openMatch({ sessionId, key }: Join) {
   router.replace({ pathname: '/match', params: { role: 'guest', s: sessionId, k: key } });
 }
 
-/** Scans the host's QR code (design.md §5.3). Also reached through the temoin://join link. */
+/** Scans the host's QR code (design.md §5.3). Also reached through the lineo://join link. */
 export function JoinSessionScreen() {
   const params = useLocalSearchParams<{ s?: string; k?: string; v?: string }>();
   const linked = toJoin(params);
@@ -75,7 +75,7 @@ export function JoinSessionScreen() {
       <SafeAreaView style={styles.overlay}>
         <Text style={styles.title}>Scannez le QR code du téléphone hôte</Text>
         <Text style={styles.hint}>
-          {invalid ? 'Ce n’est pas un code de session Témoin.' : 'Affiché sur l’écran de match.'}
+          {invalid ? 'Ce n’est pas un code de session Lineo.' : 'Affiché sur l’écran de match.'}
         </Text>
         <View style={styles.frame} />
         <Button label="Annuler" variant="outline" onPress={() => router.back()} />

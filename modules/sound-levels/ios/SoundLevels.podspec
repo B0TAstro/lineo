@@ -4,7 +4,7 @@ Pod::Spec.new do |s|
   s.summary        = 'Loudness envelope of a recorded clip, for the replay timeline.'
   s.description    = 'Decodes the sound track of a video file and returns its RMS per window.'
   s.license        = 'UNLICENSED'
-  s.author         = 'Temoin'
+  s.author         = 'Lineo'
   s.homepage       = 'https://github.com/B0TAstro/temoin'
   s.platforms      = { :ios => '16.4' }
   s.swift_version  = '5.9'

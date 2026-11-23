@@ -1,10 +1,11 @@
 /**
- * What Témoin looks like over Bluetooth. These UUIDs are the contract between phones, like
+ * What Lineo looks like over Bluetooth. These UUIDs are the contract between phones, like
  * PROTOCOL_VERSION: every phone, iPhone or Android, must use the same ones. They are not secret:
- * any scan shows them (the last group spells "temoin" in hex).
+ * any scan shows them (the last group spells "temoin", the app's first name, in hex: nobody
+ * sees them, so they were kept through the rename).
  */
 
-/** Témoin's GATT service: one characteristic per direction. */
+/** Lineo's GATT service: one characteristic per direction. */
 export const SERVICE = '6b1c0001-6f74-4e1d-9a0b-74656d6f696e';
 /** Guests write their messages here. */
 export const TO_HOST = '6b1c0002-6f74-4e1d-9a0b-74656d6f696e';

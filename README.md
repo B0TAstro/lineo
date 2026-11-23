@@ -1,8 +1,8 @@
-# Témoin
+# Lineo
 
 > A neutral third party in your pocket. **Show, don't rule.**
 
-Témoin is a mobile app for amateur tennis matches played **without an umpire**. Phones placed around the court film every point and keep a score that both sides validate. When players disagree on a ball, anyone presses **VAR**: every phone in the session replays the point from its own angle, in slow motion, frame by frame, with zoom. The players decide together, looking at the same picture. The app never rules.
+Lineo is a mobile app for amateur tennis matches played **without an umpire**. Phones placed around the court film every point and keep a score that both sides validate. When players disagree on a ball, anyone presses **VAR**: every phone in the session replays the point from its own angle, in slow motion, frame by frame, with zoom. The players decide together, looking at the same picture. The app never rules.
 
 [**Releases**](../../releases) · [Roadmap](#roadmap) · [How it works](#how-it-works) · [License](#license)
 
@@ -14,7 +14,7 @@ In amateur tennis tournaments, there is almost never an umpire. Players call the
 
 Research with players (interviews, surveys, benchmark) showed that the problem is not knowing whether the ball was in. It is that **nobody neutral is there to settle it at the right moment**. A decision is only accepted when it is calm, explained, and backed by evidence that both sides can see. Players distrust black-box verdicts.
 
-Between professional systems (around $100,000 per court) and stats-oriented amateur apps, nothing shows the evidence to both players or keeps a score validated by both sides. Témoin fills that gap with the phones already on the court.
+Between professional systems (around $100,000 per court) and stats-oriented amateur apps, nothing shows the evidence to both players or keeps a score validated by both sides. Lineo fills that gap with the phones already on the court.
 
 ## How it works
 
@@ -42,8 +42,8 @@ Each version adds a building block without breaking the previous one. Each versi
 | **v0.2** · Multi-phone session | Host and guests over Bluetooth, join by QR code, shared score, VAR opens on every phone | The shared score holds, iPhone and Android together | Done |
 | **v0.3** · Voice | The app recognises the server's call, updates the score and cuts the clip, with no one touching the phone | The phone can disappear during the rally | Done |
 | **v0.4** · Sound | Sound recorded with the video, hits and bounces marked on the replay timeline | Sound helps read the replay | Done |
-| **v0.5** · Ball tracking | Ball followed in the replay, trajectory drawn | The ball can be tracked without a vision model | In progress |
-| **v0.6** · Wi-Fi fallback | Automatic switch between Bluetooth and local Wi-Fi | No event is lost when Bluetooth drops | Planned |
+| **v0.5** · Ball tracking | Ball followed in the replay, trajectory drawn | The ball can be tracked without a vision model | Done |
+| **v0.6** · Wi-Fi fallback | Automatic switch between Bluetooth and local Wi-Fi | No event is lost when Bluetooth drops | In progress |
 | **v0.7** · Calibrated court | Tap the 4 corners, court lines projected on the replay | The geometry holds on a real court | Planned |
 | **v0.8** · Detected court | Automatic court line and net detection | Manual calibration is no longer needed | Planned |
 | **v0.9** · Bounce and confidence | Bounce detected, in or out with a confidence score ("70% sure the ball was out"), never imposed | Detection actually helps read the picture and builds trust | Planned |

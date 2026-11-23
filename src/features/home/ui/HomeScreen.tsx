@@ -11,7 +11,7 @@ export function HomeScreen() {
     <SafeAreaView style={styles.screen}>
       <View style={styles.header}>
         <Text style={styles.title} accessibilityRole="header">
-          Témoin
+          Lineo
         </Text>
       </View>
 

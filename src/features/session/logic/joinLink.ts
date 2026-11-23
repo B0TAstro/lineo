@@ -27,7 +27,7 @@ export function decodeSessionKey(key: string): Uint8Array | null {
 }
 
 export const buildJoinLink = ({ sessionId, key }: Join) =>
-  `temoin://join?s=${sessionId}&k=${key}&v=${PROTOCOL_VERSION}`;
+  `lineo://join?s=${sessionId}&k=${key}&v=${PROTOCOL_VERSION}`;
 
 /** The session code and its key, or null if either is malformed (a hand-made link, say). */
 export function toSession(s: string | undefined, k: string | undefined): Join | null {
@@ -37,7 +37,7 @@ export function toSession(s: string | undefined, k: string | undefined): Join | 
 
 /**
  * The session in the link's parameters (scanned in the app, or opened from the iPhone Camera
- * app), or null if it is not a Témoin link of this version.
+ * app), or null if it is not a Lineo link of this version.
  */
 export function toJoin(params: { s?: string; k?: string; v?: string }): Join | null {
   if (Number(params.v) !== PROTOCOL_VERSION) return null;
@@ -45,7 +45,7 @@ export function toJoin(params: { s?: string; k?: string; v?: string }): Join | n
 }
 
 export function parseJoinLink(text: string): Join | null {
-  const match = /^temoin:\/\/join\?s=([^&]*)&k=([^&]*)&v=(\d+)$/.exec(text.trim());
+  const match = /^lineo:\/\/join\?s=([^&]*)&k=([^&]*)&v=(\d+)$/.exec(text.trim());
   if (!match) return null;
   return toJoin({ s: match[1] ?? '', k: match[2] ?? '', v: match[3] ?? '' });
 }
