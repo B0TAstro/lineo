@@ -63,7 +63,7 @@ Schémas (Mermaid, affichés par GitHub) : `docs/architecture.md`, `docs/parcour
 ```
 models/         modèle Vosk (téléchargé par `npm run setup:model`, jamais commité)
 modules/        modules natifs locaux (sound-levels : niveau sonore d'un clip, pour les pics du replay ; clip-frames : images d'un clip, pour le suivi de balle)
-assets/         icon/ (icône d'app, splash), logo/ (`lineo-full` : le nom avec la balle, `lineo-symbol` : la balle seule ; SVG + PNG @2x, exports Figma), icons/ (icônes du design system en SVG, leur blanc est `currentColor`) et images/ uniquement
+assets/         images/ (icône d'app et splash, noms et dossier par défaut d'Expo), logo/ (`lineo-full` : le nom avec la balle, `lineo-symbol` : la balle seule ; SVG + PNG, exports Figma) et icons/ (icônes du design system en SVG, leur blanc est `currentColor`)
 src/
 ├── app/        routes expo-router, minces : elles lisent leurs paramètres et affichent un écran
 ├── features/   une fonctionnalité = un dossier complet, entrée par son index.ts
