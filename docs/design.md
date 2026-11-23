@@ -1,8 +1,8 @@
-# Design · Témoin
+# Design · Lineo
 
 ## 1. Intention
 
-Témoin doit **soulager la charge mentale** du joueur, pas en ajouter. Il se fait oublier pendant l'échange et n'apparaît qu'entre les points et au moment du litige. Quand il apparaît, il montre une preuve aussi claire qu'une image de télévision, et il laisse les joueurs décider.
+Lineo doit **soulager la charge mentale** du joueur, pas en ajouter. Il se fait oublier pendant l'échange et n'apparaît qu'entre les points et au moment du litige. Quand il apparaît, il montre une preuve aussi claire qu'une image de télévision, et il laisse les joueurs décider.
 
 ## 2. Principes UX
 

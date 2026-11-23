@@ -94,12 +94,12 @@ jobs:
           VERSION: ${{ needs.check-version.outputs.version }}
           PRERELEASE: ${{ needs.check-version.outputs.prerelease }}
         run: |
-          mv app-release.apk "temoin-v$VERSION.apk"
+          mv app-release.apk "lineo-v$VERSION.apk"
           flags=()
           if [ "$PRERELEASE" = true ]; then flags+=(--prerelease); fi
-          gh release create "v$VERSION" "temoin-v$VERSION.apk" \
+          gh release create "v$VERSION" "lineo-v$VERSION.apk" \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
-            --title "Témoin v$VERSION" \
+            --title "Lineo v$VERSION" \
             --generate-notes \
             "${flags[@]}"

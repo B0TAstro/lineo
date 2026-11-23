@@ -32,7 +32,7 @@ jobs:
         id: upload
         uses: actions/upload-artifact@v7
         with:
-          name: temoin-pr-${{ github.event.pull_request.number }}
+          name: lineo-pr-${{ github.event.pull_request.number }}
           path: ${{ steps.build.outputs.apk-path }}
           retention-days: 14
 

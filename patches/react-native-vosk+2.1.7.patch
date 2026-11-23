@@ -10,7 +10,7 @@ index 4556403..7263f22 100644
 -      [audioSession setCategory:AVAudioSessionCategoryRecord
 -                           mode:AVAudioSessionModeMeasurement
 -                        options:0
-+    // Temoin: the camera records the sound too and owns the session (play and record). Joining
++    // Lineo: the camera records the sound too and owns the session (play and record). Joining
 +    // it instead of switching to record-only keeps the video's audio running.
 +    if (audioSession.category != AVAudioSessionCategoryPlayAndRecord) {
 +      [audioSession setCategory:AVAudioSessionCategoryPlayAndRecord
@@ -41,7 +41,7 @@ index 4556403..7263f22 100644
 -        setActive:NO
 -      withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation
 -            error:&err];
-+  // Temoin: the session is left as it is. Vosk restarts at every game to change its grammar, and
++  // Lineo: the session is left as it is. Vosk restarts at every game to change its grammar, and
 +  // deactivating the session there would cut the camera's sound mid-match.
  }
  

@@ -58,8 +58,8 @@ export function MatchScreen({ session }: { session: MatchSession }) {
   if (!camera.permission.granted) {
     return (
       <MessageScreen
-        message="Témoin a besoin de la caméra pour filmer les points."
-        {...(!camera.permission.canAsk && { hint: 'Autorisez-la dans Réglages › Témoin.' })}
+        message="Lineo a besoin de la caméra pour filmer les points."
+        {...(!camera.permission.canAsk && { hint: 'Autorisez-la dans Réglages › Lineo.' })}
       >
         {camera.permission.canAsk && <Button label="Autoriser" onPress={camera.permission.ask} />}
       </MessageScreen>

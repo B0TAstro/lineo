@@ -4,7 +4,7 @@ export LC_NUMERIC=C
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SOURCE="${1:-$ROOT/dev-videos}"
-BUNDLE_ID="com.tomboullay.temoin"
+BUNDLE_ID="com.tomboullay.lineo"
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
