@@ -74,11 +74,12 @@ src/
 │   ├── ball-tracking/ balle suivie dans le replay (OpenCV + Kalman)
 │   ├── voice/        annonce du serveur → score (Vosk)
 │   ├── score/        affichage du score
+│   ├── settings/     paramètres (cadence, points gardés, voix, lecture assistée), seul fichier gardé entre deux lancements
 │   └── match/        l'écran de match, qui assemble les autres
 ├── sports/
 │   └── tennis/       ce qui change d'un sport à l'autre : machine à états du score, libellés, annonces, format du match
 └── shared/     ce qui ne connaît aucun métier
-    ├── ui/           design system (voir `docs/design.md`) : theme, Icon, Logo, Button, Chip, TextField, ScreenTitle, StatusDot, ServeDot, IconButton…
+    ├── ui/           design system (voir `docs/design.md`) : theme, Icon, Logo, Button, Chip, TextField, Toggle, ScreenTitle, StatusDot, ServeDot, IconButton…
     ├── lib/          TS pur : base64url
     └── native/       files, random
 ```
@@ -146,7 +147,7 @@ On garde le buffer vidéo du POC replay, mais **son unité est le point, pas la 
 - Coupe : sur iOS le fichier suivant démarre avant que le précédent s'arrête (aucune image perdue) ; sur Android le précédent s'arrête d'abord (trou mesuré, entre deux points).
 - La fin de point est la **proposition** du point (tap ou annonce vocale reconnue), au plus près de la vraie fin de l'échange. Si la proposition est refusée, le fichier déjà coupé est rattaché au point qui continue : ce point a exceptionnellement deux fichiers, joués l'un après l'autre.
 - Garde-fou : si aucun point n'est marqué pendant 5 min (oubli, changement de côté), un nouveau fichier démarre.
-- On garde **3 points** : le point en cours et les 2 précédents. Dès qu'un point sort de cette fenêtre, son fichier est supprimé.
+- On garde **3 points** par défaut : le point en cours et les 2 précédents (de 1 à 3 précédents dans les Paramètres). Dès qu'un point sort de cette fenêtre, son fichier est supprimé.
 - VAR verrouille les clips concernés le temps du litige. L'enregistrement est **mis en pause** pendant le replay pour soulager le téléphone (chauffe, batterie), et reprend au retour au score.
 - Tout est supprimé en fin de match et au lancement de l'app (en cas de crash).
 - Une session est en **paysage** (les menus restent en portrait). Chaque téléphone choisit sa caméra : arrière (meilleure image) ou avant (les joueurs voient l'écran et le score). Pas de miroir : le replay montre le court tel qu'il est, sinon la caméra avant inverserait gauche et droite.
@@ -238,6 +239,10 @@ Tourne **uniquement sur le point demandé**, jamais en continu.
 6. Chaque téléphone juge la moitié de court la plus proche de lui.
 
 Les constats mesurés dans `temoin-poc-cv-tracking/CLAUDE.md` (symétrie du court, top-hat, fusion des bords de bande…) s'appliquent : ne pas les défaire.
+
+## Paramètres
+
+Écran `settings`, ouvert depuis l'accueil. Images par seconde (60 ou 30), points gardés en mémoire (1 à 3 en plus du point en cours), score à la voix, lecture assistée du replay. Enregistrés dans `settings.json` (dossier Documents de l'app) : **le seul fichier que l'app garde entre deux lancements**, sans vidéo ni prénom. Lus au début du match et figés pendant tout le match : changer la cadence ou le buffer en cours de match redémarrerait la caméra et effacerait les clips (la roue de l'écran de match reste donc désactivée). La voix se coupe toujours pendant le match avec le micro du rail.
 
 ## Contraintes
 

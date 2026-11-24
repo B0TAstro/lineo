@@ -10,7 +10,6 @@ import { createSynchronizable, scheduleOnRN } from 'react-native-worklets';
 import { useCapturePermissions } from './useCapturePermissions';
 import { useFpsMeter } from './useFpsMeter';
 
-export const TARGET_FPS = 60;
 const TARGET_BIT_RATE = 10_000_000;
 
 /**

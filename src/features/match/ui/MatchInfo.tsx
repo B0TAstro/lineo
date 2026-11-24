@@ -3,12 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Camera, type CameraDevice, type CameraSessionConfig } from 'react-native-vision-camera';
 
-import {
-  type ClipStats,
-  MAX_SAVED_POINTS,
-  type MatchCamera,
-  TARGET_FPS,
-} from '@/features/recording';
+import type { ClipStats, MatchCamera } from '@/features/recording';
 import type { LinkSummary } from '@/features/session';
 import type { VoiceStatus } from '@/features/voice';
 import { Icon, type IconName } from '@/shared/ui/Icon';
@@ -40,6 +35,8 @@ export function MatchInfo({
   voiceOn,
   onToggleVoice,
   stats,
+  targetFps,
+  savedPoints,
   previewOverlay,
   dev,
 }: {
@@ -54,6 +51,9 @@ export function MatchInfo({
   voiceOn: boolean;
   onToggleVoice: () => void;
   stats: ClipStats;
+  /** From the settings, read when the match started */
+  targetFps: number;
+  savedPoints: number;
   /** Drawn over the camera image (dev: the live ball tracking) */
   previewOverlay?: ReactNode;
   /** Dev builds only: the measures, under the configuration */
@@ -91,7 +91,7 @@ export function MatchInfo({
           device={device}
           isActive={cameraActive}
           outputs={[camera.videoOutput, camera.frameOutput]}
-          constraints={[{ fps: TARGET_FPS }, { resolutionBias: camera.videoOutput }]}
+          constraints={[{ fps: targetFps }, { resolutionBias: camera.videoOutput }]}
           // The replay shows the court as it is: a mirrored clip would swap the lines
           mirrorMode="off"
           onStarted={() => camera.setRunning(true)}
@@ -140,7 +140,7 @@ export function MatchInfo({
       {open ? (
         <ScrollView style={styles.config} contentContainerStyle={styles.configContent}>
           <Text style={styles.section}>Configuration</Text>
-          <Figure label="Points en mémoire" value={`${stats.savedCount} / ${MAX_SAVED_POINTS}`} />
+          <Figure label="Points en mémoire" value={`${stats.savedCount} / ${savedPoints}`} />
           <Figure
             label="Taille d’un point"
             value={pointMB === undefined ? '—' : `≈ ${pointMB.toFixed(0)} Mo`}

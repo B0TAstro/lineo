@@ -5,10 +5,11 @@ import { Alert, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BallHud, BallTrackOverlay, useLiveBallTrack } from '@/features/ball-tracking';
-import { TARGET_FPS, useClipRecorder, useClipsFromLog, useMatchCamera } from '@/features/recording';
+import { useClipRecorder, useClipsFromLog, useMatchCamera } from '@/features/recording';
 import { outcomeEvents, ReplayScreen, useVarReplay, varSummary } from '@/features/replay';
 import { type PointControls, ScoreDisplay } from '@/features/score';
 import { InviteOverlay, linkStatus, type MatchSession } from '@/features/session';
+import { appSettings } from '@/features/settings';
 import { heardLine, useVoice } from '@/features/voice';
 import { useAppActive } from '@/shared/native/useAppActive';
 import { Button } from '@/shared/ui/Button';
@@ -27,6 +28,8 @@ import { MatchClock } from '../logic/MatchClock';
 export function MatchScreen({ session }: { session: MatchSession }) {
   const { view, dispatch, log } = session;
   const { state } = view;
+  // Read once: the camera and the buffer keep their settings for the whole match
+  const [settings] = useState(() => appSettings.store.get());
   const [a, b] = state.config.sides;
   const setup = useMemo(() => toMatchSetup(session.form), [session.form]);
 
@@ -38,12 +41,16 @@ export function MatchScreen({ session }: { session: MatchSession }) {
   const appActive = useAppActive();
   const [showQr, setShowQr] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
-  const [voiceOn, setVoiceOn] = useState(true);
+  const [voiceOn, setVoiceOn] = useState(settings.voice);
 
   // Recording pauses during the replay, to spare the phone (heat, battery), and in the background, where the OS stops the camera
   const matchOver = state.matchWonBy !== undefined;
   const cameraActive = !view.varOpen && appActive && !matchOver;
-  const { stats, clips } = useClipRecorder(camera.videoOutput, camera.running && cameraActive);
+  const { stats, clips } = useClipRecorder(
+    camera.videoOutput,
+    camera.running && cameraActive,
+    settings.savedPoints,
+  );
   useClipsFromLog(log, setup, clips);
   const replay = useVarReplay(view, log, clips);
 
@@ -147,7 +154,7 @@ export function MatchScreen({ session }: { session: MatchSession }) {
         <View style={styles.main}>
           <View style={styles.top}>
             <StatusPill recording={stats.recording} link={link} />
-            {/* UI only: the settings screen does not exist yet */}
+            {/* The settings open from the home screen: they apply when a match starts */}
             <IconButton
               icon="settings"
               label="Paramètres"
@@ -190,6 +197,8 @@ export function MatchScreen({ session }: { session: MatchSession }) {
         voiceOn={voiceOn}
         onToggleVoice={() => setVoiceOn(!voiceOn)}
         stats={stats}
+        targetFps={settings.fps}
+        savedPoints={settings.savedPoints}
         previewOverlay={
           liveBall.onFrame && liveBall.frame ? (
             <BallTrackOverlay points={liveBall.trail} video={liveBall.frame} timeS={liveBall.t} />
@@ -237,7 +246,8 @@ export function MatchScreen({ session }: { session: MatchSession }) {
         <ReplayScreen
           clips={replay.clips}
           initialIndex={replay.initialIndex}
-          fps={camera.selectedFps ?? TARGET_FPS}
+          fps={camera.selectedFps ?? settings.fps}
+          assistedReading={settings.assistedReading}
           court={session.form.court}
           sides={[
             { id: a.id, name: sideName(state, a.id), role: roleLabel(state, a.id) },

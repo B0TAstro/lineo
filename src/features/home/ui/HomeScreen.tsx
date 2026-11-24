@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/shared/ui/Button';
 import { Icon, type IconName } from '@/shared/ui/Icon';
+import { IconButton } from '@/shared/ui/IconButton';
 import { Logo } from '@/shared/ui/Logo';
 import { colors, fonts, radiusCard, space, type } from '@/shared/ui/theme';
 
@@ -27,6 +28,14 @@ const TIPS: { icon: IconName; title: string; text: string; accent?: boolean }[] 
 export function HomeScreen() {
   return (
     <SafeAreaView style={styles.screen}>
+      <View style={styles.top}>
+        <IconButton
+          icon="settings"
+          label="Paramètres"
+          variant="plain"
+          onPress={() => router.push('/settings')}
+        />
+      </View>
       <View style={styles.header} accessibilityRole="header" accessibilityLabel="Lineo">
         <Logo height={110} />
         <Text style={styles.tagline}>la ligne a toujours raison.</Text>
@@ -62,7 +71,8 @@ export function HomeScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: space.l },
-  header: { alignItems: 'center', marginTop: 48 },
+  top: { flexDirection: 'row', justifyContent: 'flex-end', marginRight: -10 },
+  header: { alignItems: 'center', marginTop: space.s },
   tagline: { ...type.body, fontSize: 17, color: colors.accent },
   // Figma keeps more air above the card than below it
   spaceAbove: { flex: 2.3 },

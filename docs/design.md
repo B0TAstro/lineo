@@ -39,7 +39,7 @@ Objectif : moins d'une minute entre l'ouverture de l'app et le premier point fil
 Maquette et design system : Figma `lf5sfGc7zUZLD9BE8juhNG`, pages « Maquette » et « Design System ». Ce qui n'a pas encore de logique est en place dans l'interface et marqué `UI only` dans le code.
 
 ### 5.1 Accueil
-Le logo complet et « la ligne a toujours raison. », une carte de trois conseils (posez le téléphone, jouez normalement, un doute : VAR), puis **Créer une session** (citron) et **Rejoindre une session** (contour blanc). *À venir* : roue Paramètres, liens légaux.
+La roue en haut à droite ouvre les Paramètres. Le logo complet et « la ligne a toujours raison. », une carte de trois conseils (posez le téléphone, jouez normalement, un doute : VAR), puis **Créer une session** (citron) et **Rejoindre une session** (contour blanc). *À venir* : liens légaux.
 
 ### 5.2 Créer une session (3 étapes, tout pré-rempli)
 1. **Type de match** : format simple / double, nombre de sets, dernier set (super tie-break ou set normal), à 40-40 (avantage ou point décisif).
@@ -78,7 +78,10 @@ Quand le suivi a analysé tout le point, une carte s'ouvre sur la vidéo : « 70
 ### 5.8 Corriger le score
 Aujourd'hui : **−** à côté du camp qui a gagné le dernier point. *À venir* : la liste des derniers points, pour corriger plus loin en arrière.
 
-### 5.9 Fin de match
+### 5.9 Paramètres
+Enregistrement (images par seconde, points gardés en mémoire), pendant le match (score à la voix, lecture assistée du replay), vos données (vidéos supprimées en fin de match : toujours), la phrase « tout est filmé et traité sur ce téléphone », puis la version. Les réglages s'appliquent au match suivant. *UI only* : conditions d'utilisation et confidentialité.
+
+### 5.10 Fin de match
 Qui gagne, en combien de sets et de temps, le score de chaque set, les points revus au VAR, les litiges réglés sans rejouer et leur durée moyenne, « Vidéos supprimées », **Terminer**. Les vidéos sont effacées dès que le match est gagné. Durée et temps des litiges sont mesurés sur le téléphone (le journal n'a pas d'heure) : un invité arrivé en cours de match compte depuis son arrivée.
 
 ## 6. États à concevoir
@@ -135,7 +138,7 @@ Source : Figma, page « Design System ». Dans le code : `src/shared/ui/theme.ts
 - `assets/images/` : l'icône d'app et le splash, aux noms par défaut d'Expo.
 
 ### 7.5 Composants
-Partagés (`shared/ui`) : `Button` (primary, secondary, var, ghost), `Chip`, `TextField`, `IconButton` (tool, plain, overlay), `ScreenTitle`, `StatusDot`, `ServeDot`, `Logo`, `Icon`, `Fade`, `MessageScreen`, `QrCode`, `ZoomableView`. Par écran : `ScoreDisplay`, `StatusPill`, `MatchInfo`, `MatchControls`, `MatchEndScreen`, `PendingBanner`, `ClipPlayer` (`Seekbar`, `PlayerControls`, `PlayerTools`, `PlayerTopBar`), `DecisionPanel`, `AssistedReading`, `BallTrackOverlay`.
+Partagés (`shared/ui`) : `Button` (primary, secondary, var, ghost), `Chip`, `TextField`, `Toggle`, `IconButton` (tool, plain, overlay), `ScreenTitle`, `StatusDot`, `ServeDot`, `Logo`, `Icon`, `Fade`, `MessageScreen`, `QrCode`, `ZoomableView`. Par écran : `ScoreDisplay`, `StatusPill`, `MatchInfo`, `MatchControls`, `MatchEndScreen`, `PendingBanner`, `ClipPlayer` (`Seekbar`, `PlayerControls`, `PlayerTools`, `PlayerTopBar`), `DecisionPanel`, `AssistedReading`, `BallTrackOverlay`.
 
 ## 8. Interactions et retours
 

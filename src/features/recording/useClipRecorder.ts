@@ -10,14 +10,20 @@ import { SegmentRecorder } from './native/SegmentRecorder';
  * Records one file per point while `recording` is true, on VisionCamera.
  * The hook builds the recorder with the phone's camera and files
  */
-export function useClipRecorder(videoOutput: CameraVideoOutput, recording: boolean) {
+export function useClipRecorder(
+  videoOutput: CameraVideoOutput,
+  recording: boolean,
+  /** Read once: the buffer keeps its size for the whole match */
+  maxSaved: number,
+) {
   const clips = useMemo(
     () =>
       new ClipRecorder({
         createRecorder: (events) => new SegmentRecorder(videoOutput, events),
         deleteFile,
+        maxSaved,
       }),
-    [videoOutput],
+    [videoOutput, maxSaved],
   );
   const stats = useSyncExternalStore(clips.stats.subscribe, clips.stats.get);
 

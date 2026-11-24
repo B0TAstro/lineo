@@ -35,6 +35,7 @@ export function ClipPlayer({
   segments,
   fps,
   court,
+  assistedReading,
   point,
   renderPanel,
   devVideos,
@@ -45,6 +46,8 @@ export function ClipPlayer({
   fps: number;
   /** The court of the session: the ball tracking takes its settings from it */
   court: Court;
+  /** The setting: shows the assisted reading card once the point is tracked */
+  assistedReading: boolean;
   point: PointNav;
   /** The decision panel beside the video, with its button to close it; none for a test video */
   renderPanel: ((close: () => void) => ReactNode) | undefined;
@@ -320,7 +323,7 @@ export function ClipPlayer({
         </Animated.View>
 
         {/* Once the whole point is tracked: stays over the video, the controls fade without it */}
-        {ball.on && ball.done && (
+        {assistedReading && ball.on && ball.done && (
           <View
             style={[styles.reading, { top: insets.top + 72, left: insets.left + 24 }]}
             pointerEvents="box-none"
