@@ -5,7 +5,7 @@ Ce qui tourne sur chaque téléphone en **v0.4**, et ce qui circule entre eux. E
 Image pour les slides : [`images/architecture.png`](images/architecture.png) (`npm run docs:images` la regénère depuis ce fichier).
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'fontFamily':'Helvetica, Arial','fontSize':'15px','primaryColor':'#FFFFFF','primaryTextColor':'#111111','primaryBorderColor':'#3E7A57','lineColor':'#111111','clusterBkg':'#F4F7F5','clusterBorder':'#3E7A57'}}}%%
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'Helvetica, Arial','fontSize':'15px','primaryColor':'#FFFFFF','primaryTextColor':'#0A0A0A','primaryBorderColor':'#161816','lineColor':'#0A0A0A','clusterBkg':'#F5F6F4','clusterBorder':'#161816'}}}%%
 flowchart LR
   subgraph A["📱 Téléphone HÔTE · crée la session · suffit seul pour jouer"]
     direction TB
@@ -52,11 +52,11 @@ flowchart LR
   NOTE["<b>1 téléphone</b> = hôte sans invité, même code.<br/><b>N téléphones</b> = étoile autour de l'hôte,<br/>qui numérote et diffuse les événements.<br/>🔒 Clé de session dans le QR code seulement.<br/>Pas de vidéo dans le protocole, aucun serveur."]
   B ~~~ NOTE
 
-  classDef core fill:#E8F1EC,stroke:#3E7A57,stroke-width:2px,color:#111111
-  classDef nat fill:#FFF6E3,stroke:#E9B44C,stroke-width:2px,color:#111111
+  classDef core fill:#EEF0EC,stroke:#161816,stroke-width:2px,color:#0A0A0A
+  classDef nat fill:#F6FCDC,stroke:#0A0A0A,stroke-width:2px,color:#0A0A0A
   classDef later fill:#FFFFFF,stroke:#9AA39E,stroke-width:2px,stroke-dasharray:5 4,color:#6B716D
-  classDef ui fill:#111111,stroke:#111111,color:#FFFFFF
-  classDef note fill:#FFFFFF,stroke:#111111,stroke-dasharray:4 3,color:#111111
+  classDef ui fill:#0A0A0A,stroke:#0A0A0A,color:#FFFFFF
+  classDef note fill:#FFFFFF,stroke:#0A0A0A,stroke-dasharray:4 3,color:#0A0A0A
   class A_S,A_J,A_P,A_C,A_VO,A_SO,B_CORE core
   class A_CAM,A_MIC,A_ENV,A_LINK,B_NAT nat
   class A_V,A_CV later

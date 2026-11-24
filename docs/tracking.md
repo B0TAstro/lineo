@@ -5,7 +5,7 @@ Comment l'app trouve la balle dans le replay d'un point, en **v0.5**, sans modè
 Image pour les slides : [`images/tracking.png`](images/tracking.png) (`npm run docs:images -- tracking` la regénère depuis ce fichier).
 
 ```mermaid
-%%{init: {'theme':'base','flowchart':{'wrappingWidth':460},'themeVariables':{'fontFamily':'Helvetica, Arial','fontSize':'15px','primaryColor':'#FFFFFF','primaryTextColor':'#111111','primaryBorderColor':'#3E7A57','lineColor':'#111111','clusterBkg':'#F4F7F5','clusterBorder':'#3E7A57'}}}%%
+%%{init: {'theme':'base','flowchart':{'wrappingWidth':460},'themeVariables':{'fontFamily':'Helvetica, Arial','fontSize':'15px','primaryColor':'#FFFFFF','primaryTextColor':'#0A0A0A','primaryBorderColor':'#161816','lineColor':'#0A0A0A','clusterBkg':'#F5F6F4','clusterBorder':'#161816'}}}%%
 flowchart TB
   REPLAY["🎬 <b>Replay d'un point</b> · interrupteur « Tracking » allumé<br/>le temps à l'écran est <b>t</b>"]
   COURT["🎾 <b>Terrain de la session</b><br/>lieu + surface → réglages<br/><i>ballConfigFor</i>"]
@@ -53,10 +53,10 @@ flowchart TB
   NOTE["<b>Pas de modèle de vision.</b><br/>Le temps à l'écran avance : on lit la suite,<br/>la trajectoire est recalculée toutes les 30 images lues.<br/>Ce qui a été lu est gardé (8 s) : reculer ou mettre<br/>en pause ne relit rien."]
   DESSINER ~~~ NOTE
 
-  classDef step fill:#FFFFFF,stroke:#3E7A57,stroke-width:2px,color:#111111
-  classDef result fill:#FFF6E3,stroke:#E9B44C,stroke-width:2px,color:#111111
-  classDef ui fill:#111111,stroke:#111111,color:#FFFFFF
-  classDef note fill:#FFFFFF,stroke:#111111,stroke-dasharray:4 3,color:#111111
+  classDef step fill:#FFFFFF,stroke:#161816,stroke-width:2px,color:#0A0A0A
+  classDef result fill:#F6FCDC,stroke:#0A0A0A,stroke-width:2px,color:#0A0A0A
+  classDef ui fill:#0A0A0A,stroke:#0A0A0A,color:#FFFFFF
+  classDef note fill:#FFFFFF,stroke:#0A0A0A,stroke-dasharray:4 3,color:#0A0A0A
   class L1,L2,D1,D2,D3,D4,S1,S2,S3,S4,V1,V2,V3,V4 step
   class D5,S5,COURT result
   class REPLAY ui

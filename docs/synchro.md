@@ -5,7 +5,7 @@ Comment une annonce vocale et un VAR passent d'un téléphone à tous les autres
 Image pour les slides : [`images/synchro.png`](images/synchro.png) (`npm run docs:images` la regénère depuis ce fichier).
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'fontFamily':'Helvetica, Arial','fontSize':'15px','actorBkg':'#111111','actorTextColor':'#FFFFFF','actorBorder':'#111111','noteBkgColor':'#FFF6E3','noteBorderColor':'#E9B44C','signalColor':'#111111','signalTextColor':'#111111','labelBoxBkgColor':'#E8F1EC','labelBoxBorderColor':'#3E7A57'}}}%%
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'Helvetica, Arial','fontSize':'15px','actorBkg':'#0A0A0A','actorTextColor':'#FFFFFF','actorBorder':'#0A0A0A','noteBkgColor':'#F6FCDC','noteBorderColor':'#0A0A0A','signalColor':'#0A0A0A','signalTextColor':'#0A0A0A','labelBoxBkgColor':'#EEF0EC','labelBoxBorderColor':'#161816'}}}%%
 sequenceDiagram
   autonumber
   participant S as 🎾 Serveur (joueur)

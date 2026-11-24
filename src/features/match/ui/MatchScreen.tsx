@@ -1,12 +1,12 @@
 import { useKeepAwake } from 'expo-keep-awake';
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BallHud, BallTrackOverlay, useLiveBallTrack } from '@/features/ball-tracking';
 import { TARGET_FPS, useClipRecorder, useClipsFromLog, useMatchCamera } from '@/features/recording';
-import { outcomeEvents, ReplayScreen, useVarReplay } from '@/features/replay';
+import { outcomeEvents, ReplayScreen, useVarReplay, varSummary } from '@/features/replay';
 import { type PointControls, ScoreDisplay } from '@/features/score';
 import { InviteOverlay, linkStatus, type MatchSession } from '@/features/session';
 import { heardLine, useVoice } from '@/features/voice';
@@ -19,8 +19,10 @@ import { roleLabel, setScores, type SideId, sideName, toMatchSetup } from '@/spo
 
 import { DevStats } from './DevStats';
 import { MatchControls } from './MatchControls';
+import { MatchEndScreen } from './MatchEndScreen';
 import { MatchInfo } from './MatchInfo';
 import { StatusPill } from './StatusPill';
+import { MatchClock } from '../logic/MatchClock';
 
 export function MatchScreen({ session }: { session: MatchSession }) {
   const { view, dispatch, log } = session;
@@ -53,6 +55,15 @@ export function MatchScreen({ session }: { session: MatchSession }) {
   });
 
   const sets = useMemo(() => setScores(setup, view.points), [setup, view.points]);
+  const vars = useMemo(() => varSummary(log), [log]);
+  const [clock] = useState(() => new MatchClock());
+  useEffect(() => clock.varChanged(view.varOpen), [clock, view.varOpen]);
+  // Nothing outlives the match (GDPR): the videos go as soon as it is won, the end screen says so
+  useEffect(() => {
+    if (!matchOver) return;
+    clock.finish();
+    clips.discard();
+  }, [matchOver, clock, clips]);
   const link = linkStatus(session);
 
   const leave = () =>
@@ -60,6 +71,18 @@ export function MatchScreen({ session }: { session: MatchSession }) {
       { text: 'Continuer', style: 'cancel' },
       { text: 'Quitter', style: 'destructive', onPress: () => router.replace('/') },
     ]);
+
+  if (matchOver && !view.varOpen) {
+    return (
+      <MatchEndScreen
+        state={state}
+        sets={sets}
+        teams={session.form.teams}
+        vars={vars}
+        {...clock.summary()}
+      />
+    );
+  }
 
   if (!camera.permission.granted) {
     return (

@@ -5,7 +5,7 @@ Le parcours **cible (v1.0)**, écran par écran. Pas encore construits : l'écra
 Image pour les slides : [`images/parcours.png`](images/parcours.png) (`npm run docs:images` la regénère depuis ce fichier).
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'fontFamily':'Helvetica, Arial','fontSize':'15px','primaryColor':'#FFFFFF','primaryTextColor':'#111111','primaryBorderColor':'#111111','lineColor':'#111111'}}}%%
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'Helvetica, Arial','fontSize':'15px','primaryColor':'#FFFFFF','primaryTextColor':'#0A0A0A','primaryBorderColor':'#0A0A0A','lineColor':'#0A0A0A'}}}%%
 flowchart TB
   E1["<b>ÉCRAN 1 · Accueil</b><br/>━━━━━━━━━━━━<br/>[ Créer une session ]<br/>[ Rejoindre une session ]"]
 
@@ -40,14 +40,14 @@ flowchart TB
   E4 -- "Balle de match jouée" --> E7
   E7 --> E1
 
-  classDef home fill:#3E7A57,stroke:#3E7A57,color:#FFFFFF
-  classDef match fill:#111111,stroke:#E9B44C,stroke-width:3px,color:#FFFFFF
-  classDef var fill:#E9B44C,stroke:#111111,color:#111111
-  classDef std fill:#FFFFFF,stroke:#111111,color:#111111
+  classDef home fill:#161816,stroke:#161816,color:#FFFFFF
+  classDef match fill:#0A0A0A,stroke:#D4F53C,stroke-width:3px,color:#FFFFFF
+  classDef var fill:#D4F53C,stroke:#0A0A0A,color:#0A0A0A
+  classDef std fill:#FFFFFF,stroke:#0A0A0A,color:#0A0A0A
   class E1 home
   class E4 match
   class E5,E6 var
   class E2A,E2B,E3,E7 std
-  classDef input fill:#E8F1EC,stroke:#3E7A57,stroke-width:2px,color:#111111
+  classDef input fill:#EEF0EC,stroke:#161816,stroke-width:2px,color:#0A0A0A
   class VOIX,TAP input
 ```
