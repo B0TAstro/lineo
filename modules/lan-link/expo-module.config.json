@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["LanLinkModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.lanlink.LanLinkModule"]
+  }
+}
