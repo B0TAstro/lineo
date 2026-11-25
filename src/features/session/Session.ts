@@ -1,7 +1,8 @@
 import type { SetupForm } from '@/sports/tennis';
 
+import type { LinkHealth } from './logic/linkHealth';
 import type { LoggedEvent, MatchEvent, MatchView } from './logic/matchLog';
-import type { LinkStatus } from './native/Transport';
+import type { LinkKind, LinkStatus } from './native/Transport';
 
 /** What every phone of the session has, host or guest. */
 type SessionBase = {
@@ -18,9 +19,15 @@ export type HostSession = SessionBase & {
   role: 'host';
   form: SetupForm;
   view: MatchView;
-  /** Bluetooth on (guests can join), or off: the match goes on with no radio. */
+  /** Bluetooth on (guests can join by it), or off: refused or unavailable. */
   link: 'connected' | 'off';
+  /** Where guests reach this phone on the local Wi-Fi (`ip:port`); empty with no Wi-Fi. */
+  wifi: string[];
+  /** Guests that answered the last pings, on any link, and on each link. */
   guests: number;
+  byLink: Record<LinkKind, number>;
+  /** Last ping round trip on each link, in ms. */
+  rttMs: Partial<Record<LinkKind, number>>;
 };
 
 /** A phone that scanned the QR code: it learns the match once the host has sent it. */
@@ -28,7 +35,14 @@ export type GuestSession = SessionBase & {
   role: 'guest';
   form?: SetupForm;
   view?: MatchView;
+  /** The link to the host as a whole: connected by one link or the other, or not. */
   link: LinkStatus;
+  /** The link the guest sends on; undefined: none works. */
+  via: LinkKind | undefined;
+  /** Each link, as the host's pings say (undefined: no ping by it yet). */
+  health: Partial<Record<LinkKind, LinkHealth>>;
+  /** Whether the host has a Wi-Fi address to try. */
+  wifiKnown: boolean;
 };
 
 export type Session = HostSession | GuestSession;

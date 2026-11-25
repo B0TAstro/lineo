@@ -23,14 +23,17 @@ import { type Join, parseJoinLink, toJoin } from '../logic/joinLink';
 
 const QR_TYPES: ScannedObjectType[] = ['qr'];
 
-function openMatch({ sessionId, key }: Join) {
+function openMatch({ sessionId, key, wifi }: Join) {
   // replace: the scanner unmounts and frees the camera for the match screen.
-  router.replace({ pathname: '/match', params: { role: 'guest', s: sessionId, k: key } });
+  router.replace({
+    pathname: '/match',
+    params: { role: 'guest', s: sessionId, k: key, w: wifi.join(',') },
+  });
 }
 
 /** Scans the host's QR code (design.md §5.3). Also reached through the lineo://join link. */
 export function JoinSessionScreen() {
-  const params = useLocalSearchParams<{ s?: string; k?: string; v?: string }>();
+  const params = useLocalSearchParams<{ s?: string; k?: string; v?: string; w?: string }>();
   const linked = toJoin(params);
   const { hasPermission, canRequestPermission, requestPermission } = useCameraPermission();
   const [invalid, setInvalid] = useState(false);
@@ -40,12 +43,13 @@ export function JoinSessionScreen() {
   // Opened from the iPhone Camera app: the link already carries the session.
   const linkedId = linked?.sessionId;
   const linkedKey = linked?.key;
+  const linkedWifi = linked?.wifi.join(',');
   useEffect(() => {
     if (linkedId && linkedKey && !done.current) {
       done.current = true;
-      openMatch({ sessionId: linkedId, key: linkedKey });
+      openMatch({ sessionId: linkedId, key: linkedKey, wifi: linkedWifi?.split(',') ?? [] });
     }
-  }, [linkedId, linkedKey]);
+  }, [linkedId, linkedKey, linkedWifi]);
 
   useEffect(() => {
     if (!hasPermission && canRequestPermission) requestPermission();

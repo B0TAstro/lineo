@@ -1,81 +1,70 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 
+import { toBase64Url } from '@/shared/lib/base64url';
 import { randomBytes } from '@/shared/native/random';
 import { type SetupForm, toMatchSetup } from '@/sports/tennis';
 
-import { receiveEvent, receiveSnapshot } from './logic/guestLog';
 import { decodeSessionKey } from './logic/joinLink';
-import { type LoggedEvent, type MatchEvent, replayLog } from './logic/matchLog';
+import { replayLog } from './logic/matchLog';
 import type { GuestMessage, HostMessage } from './logic/messages';
 import { SealedCodec } from './logic/SealedCodec';
 import { BleGuest } from './native/ble/BleGuest';
-import type { GuestTransport, LinkStatus } from './native/Transport';
+import { nativeLanLink } from './native/lanLink';
+import type { LinkStatus } from './native/Transport';
+import { WifiGuest } from './native/wifi/WifiGuest';
 import type { GuestSession } from './Session';
-import { completeForm } from './setup';
+import { type CreateGuestLinks, type GuestState, SessionGuest } from './SessionGuest';
+
+type In = HostMessage<SetupForm>;
+
+/** The real links: Bluetooth and the local Wi-Fi, every message sealed with the session key. */
+function guestLinks(sessionId: string, key: string): CreateGuestLinks {
+  const bytes = decodeSessionKey(key);
+  if (!bytes) throw new Error('Invalid session key');
+  return {
+    codec: () => new SealedCodec<In, GuestMessage>(bytes, randomBytes, 'guest'),
+    bluetooth: (codec, { onMessage, onStatus, onConnected }) =>
+      new BleGuest(sessionId, codec, onMessage, onStatus, onConnected),
+    wifi: (codec, { onMessage, onStatus, onConnected }) =>
+      new WifiGuest(nativeLanLink, codec, onMessage, onStatus, onConnected),
+  };
+}
+
+/** The link as a whole: by the one in use, or, before the first ping, by the transports. */
+function overall({ via, health, status }: GuestState): LinkStatus {
+  if (via) return 'connected';
+  if (health.bluetooth || health.wifi) return 'lost'; // pinged before, nothing works now
+  if (status.bluetooth === 'connected' || status.wifi === 'connected') return 'connected';
+  if (status.bluetooth === 'connecting' || status.wifi === 'connecting') return 'connecting';
+  return status.bluetooth === 'lost' ? 'lost' : 'searching';
+}
 
 /**
- * A guest mirrors the host's log. Its actions are sent to the host as intents and only count
- * once the host sends them back as events. A missing event triggers a full resync.
+ * A guest's session: `SessionGuest` does the work, this wires it to React. `wifi`: the host's
+ * addresses from the QR code.
  */
-export function useGuestSession(sessionId: string, key: string): GuestSession {
-  const [form, setForm] = useState<SetupForm>();
-  const [log, setLog] = useState<readonly LoggedEvent[]>([]);
-  const logRef = useRef<readonly LoggedEvent[]>([]);
-  const [link, setLink] = useState<LinkStatus>('searching');
-  const transport = useRef<GuestTransport<GuestMessage> | null>(null);
-
+export function useGuestSession(sessionId: string, key: string, wifi: string[]): GuestSession {
+  const [guest] = useState(
+    () => new SessionGuest(toBase64Url(randomBytes(6)), wifi, guestLinks(sessionId, key)),
+  );
   useEffect(() => {
-    const bytes = decodeSessionKey(key);
-    if (!bytes) throw new Error('Invalid session key');
-    const codec = new SealedCodec<HostMessage<SetupForm>, GuestMessage>(
-      bytes,
-      randomBytes,
-      'guest',
-    );
-    const ble = new BleGuest<HostMessage<SetupForm>, GuestMessage>(
-      sessionId,
-      codec,
-      (message) => {
-        if (message.t === 'snapshot') {
-          setForm(completeForm(message.setup));
-          logRef.current = receiveSnapshot(logRef.current, message.log);
-        } else if (message.t === 'event') {
-          const received = receiveEvent(logRef.current, message.event);
-          if (received.gap) ble.send({ t: 'sync' });
-          logRef.current = received.log;
-        } else {
-          return; // not a host message: ignored
-        }
-        setLog(logRef.current);
-      },
-      setLink,
-      () => ble.send({ t: 'sync' }),
-    );
-    transport.current = ble;
-    ble.start().catch((e) => {
-      console.warn('BLE guest', e);
-      setLink('lost');
-    });
-    return () => {
-      ble.stop();
-      transport.current = null;
-    };
-  }, [sessionId, key]);
-
-  const dispatch = useCallback((event: MatchEvent) => {
-    transport.current?.send({ t: 'intent', event });
-  }, []);
-
-  const setup = useMemo(() => (form ? toMatchSetup(form) : undefined), [form]);
-  const view = useMemo(() => (setup ? replayLog(setup, log) : undefined), [setup, log]);
+    guest.start();
+    return () => guest.stop();
+  }, [guest]);
+  const state = useSyncExternalStore(guest.store.subscribe, guest.store.get);
+  const setup = useMemo(() => (state.form ? toMatchSetup(state.form) : undefined), [state.form]);
+  const view = useMemo(() => (setup ? replayLog(setup, state.log) : undefined), [setup, state.log]);
   return {
     role: 'guest',
     sessionId,
     key,
-    log,
-    dispatch,
-    link,
-    ...(form && { form }),
+    log: state.log,
+    dispatch: guest.dispatch,
+    link: overall(state),
+    via: state.via,
+    health: state.health,
+    wifiKnown: state.wifiKnown,
+    ...(state.form && { form: state.form }),
     ...(view && { view }),
   };
 }

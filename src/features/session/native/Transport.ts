@@ -1,10 +1,13 @@
 /**
- * What the session needs from a link between phones, whatever carries it: Bluetooth today, the
- * local Wi-Fi later (v0.6), nothing at all for a phone on its own. The protocol (what is sent,
- * in which order) lives above, in the session; a transport only carries the messages.
+ * What the session needs from a link between phones, whatever carries it: Bluetooth, the local
+ * Wi-Fi, nothing at all for a phone on its own. The protocol (what is sent, in which order) lives
+ * above, in the session; a transport only carries the messages.
  *
  * Each transport takes its callbacks (messages received, guests, link status) in its constructor.
  */
+
+/** The two links a session can run on, side by side: Bluetooth first, the Wi-Fi as a fallback. */
+export type LinkKind = 'bluetooth' | 'wifi';
 
 /** A guest's link to the host. */
 export type LinkStatus = 'searching' | 'connecting' | 'connected' | 'lost';
