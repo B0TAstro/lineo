@@ -18,7 +18,6 @@ import { MessageScreen } from '@/shared/ui/MessageScreen';
 import { colors, fonts, space } from '@/shared/ui/theme';
 import { roleLabel, setScores, type SideId, sideName, toMatchSetup } from '@/sports/tennis';
 
-import { DevStats } from './DevStats';
 import { MatchControls } from './MatchControls';
 import { MatchEndScreen } from './MatchEndScreen';
 import { MatchInfo } from './MatchInfo';
@@ -36,6 +35,8 @@ export function MatchScreen({ session }: { session: MatchSession }) {
   useKeepAwake(); // otherwise the screen locks and the OS stops the camera
   // Dev builds only: the replay's ball tracking, live on the camera, to tune it on a court
   const [liveBallOn, setLiveBallOn] = useState(false);
+  // Dev builds only: what Vosk heard, under the status pill (players never see it)
+  const [showHeard, setShowHeard] = useState(false);
   const liveBall = useLiveBallTrack(__DEV__ && liveBallOn, session.form.court);
   const camera = useMatchCamera(liveBall.onFrame);
   const appActive = useAppActive();
@@ -154,10 +155,23 @@ export function MatchScreen({ session }: { session: MatchSession }) {
             label={voiceOn ? 'Couper la voix' : 'Activer la voix'}
             onPress={() => setVoiceOn(!voiceOn)}
           />
+          {__DEV__ && (
+            <IconButton
+              icon="bot"
+              label={showHeard ? 'Masquer ce que la voix entend' : 'Voir ce que la voix entend'}
+              selected={showHeard}
+              onPress={() => setShowHeard(!showHeard)}
+            />
+          )}
         </View>
 
         <View style={styles.main}>
           <View style={styles.top}>
+            {showHeard && heard !== null && (
+              <Text style={styles.heard} numberOfLines={1}>
+                {heard}
+              </Text>
+            )}
             <StatusPill recording={stats.recording} link={link} />
             {/* The match keeps the settings it started with: changes are for the next one */}
             <IconButton
@@ -174,11 +188,6 @@ export function MatchScreen({ session }: { session: MatchSession }) {
               teams={session.form.teams}
               controls={controls}
             />
-            {heard !== null && (
-              <Text style={styles.heard} numberOfLines={1}>
-                {heard}
-              </Text>
-            )}
           </View>
           <MatchControls
             view={view}
@@ -205,36 +214,24 @@ export function MatchScreen({ session }: { session: MatchSession }) {
         stats={stats}
         targetFps={settings.fps}
         savedPoints={settings.savedPoints}
+        {...(__DEV__ && {
+          liveTracking: { on: liveBallOn, onToggle: () => setLiveBallOn(!liveBallOn) },
+        })}
         previewOverlay={
           liveBall.onFrame && liveBall.frame ? (
             <BallTrackOverlay points={liveBall.trail} video={liveBall.frame} timeS={liveBall.t} />
           ) : undefined
         }
         dev={
-          __DEV__ ? (
-            <>
-              <DevStats
-                fps={camera.fps}
-                selectedFps={camera.selectedFps}
-                stats={stats}
-                session={session}
-                eventCount={log.length}
-                voiceError={voice.error}
-                liveBall={liveBallOn}
-                liveBallMs={liveBall.ms}
-                onToggleLiveBall={() => setLiveBallOn(!liveBallOn)}
-              />
-              {liveBall.onFrame && liveBall.frame && (
-                <BallHud
-                  points={liveBall.trail}
-                  timeS={liveBall.t}
-                  frame={liveBall.frame}
-                  frames={liveBall.frames}
-                  seen={liveBall.seen}
-                  extra={`${liveBall.ms.toFixed(0)} ms / image`}
-                />
-              )}
-            </>
+          liveBall.onFrame && liveBall.frame ? (
+            <BallHud
+              points={liveBall.trail}
+              timeS={liveBall.t}
+              frame={liveBall.frame}
+              frames={liveBall.frames}
+              seen={liveBall.seen}
+              extra={`${liveBall.ms.toFixed(0)} ms / image`}
+            />
           ) : undefined
         }
       />
@@ -289,5 +286,5 @@ const styles = StyleSheet.create({
   main: { flex: 1, paddingBottom: space.m },
   top: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: space.s },
   board: { flex: 1, justifyContent: 'center' },
-  heard: { fontFamily: fonts.light, fontSize: 15, color: colors.textSoft, textAlign: 'center' },
+  heard: { flex: 1, fontFamily: fonts.light, fontSize: 15, color: colors.textSoft },
 });
