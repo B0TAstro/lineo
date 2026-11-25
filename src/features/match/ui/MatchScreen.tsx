@@ -42,10 +42,13 @@ export function MatchScreen({ session }: { session: MatchSession }) {
   const [showQr, setShowQr] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [voiceOn, setVoiceOn] = useState(settings.voice);
+  // On this phone only: each phone films for itself, a pause is not an event of the match
+  const [paused, setPaused] = useState(false);
 
-  // Recording pauses during the replay, to spare the phone (heat, battery), and in the background, where the OS stops the camera
+  // Recording pauses during the replay, to spare the phone (heat, battery), in the background,
+  // where the OS stops the camera, and while the players pause the match (and the voice with it)
   const matchOver = state.matchWonBy !== undefined;
-  const cameraActive = !view.varOpen && appActive && !matchOver;
+  const cameraActive = !view.varOpen && appActive && !matchOver && !paused;
   const { stats, clips } = useClipRecorder(
     camera.videoOutput,
     camera.running && cameraActive,
@@ -65,6 +68,7 @@ export function MatchScreen({ session }: { session: MatchSession }) {
   const vars = useMemo(() => varSummary(log), [log]);
   const [clock] = useState(() => new MatchClock());
   useEffect(() => clock.varChanged(view.varOpen), [clock, view.varOpen]);
+  useEffect(() => clock.pausedChanged(paused), [clock, paused]);
   // Nothing outlives the match (GDPR): the videos go as soon as it is won, the end screen says so
   useEffect(() => {
     if (!matchOver) return;
@@ -181,6 +185,8 @@ export function MatchScreen({ session }: { session: MatchSession }) {
             opening={view.varOpen && !replay}
             dispatch={dispatch}
             onLeave={leave}
+            paused={paused}
+            onTogglePause={() => setPaused(!paused)}
           />
         </View>
       </SafeAreaView>
