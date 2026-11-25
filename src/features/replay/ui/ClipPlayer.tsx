@@ -1,4 +1,3 @@
-import { StatusBar } from 'expo-status-bar';
 import { type ReactNode, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
@@ -65,7 +64,6 @@ export function ClipPlayer({
   const [playing, setPlaying] = useState(false);
   const [rate, setRate] = useState<Rate>(1);
   const [muted, setMuted] = useState(false);
-  const [fullscreen, setFullscreen] = useState(false);
   const [panelOpen, setPanelOpen] = useState(true);
   const insets = useSafeAreaInsets();
   const [timeS, setTimeS] = useState(initial.t);
@@ -152,20 +150,13 @@ export function ClipPlayer({
     [chrome.visible],
   );
 
-  const panelShown = panelOpen && !fullscreen && renderPanel !== undefined;
+  const panelShown = panelOpen && renderPanel !== undefined;
   const topBar = (
     <PlayerTopBar
       point={point}
       onBack={onClose}
       devVideos={devVideos}
-      onOpenPanel={
-        renderPanel && !panelShown
-          ? tool(() => {
-              setFullscreen(false);
-              setPanelOpen(true);
-            })
-          : undefined
-      }
+      onOpenPanel={renderPanel && !panelShown ? tool(() => setPanelOpen(true)) : undefined}
     />
   );
   const panel = panelShown ? (
@@ -190,7 +181,6 @@ export function ClipPlayer({
 
   return (
     <View style={styles.container}>
-      <StatusBar hidden={fullscreen} />
       <View style={styles.stage}>
         <ZoomableView onTap={chrome.toggle}>
           {timeline.segments.map((segment, index) => (
@@ -304,8 +294,6 @@ export function ClipPlayer({
                 onToggleMute={tool(() => setMuted(!muted))}
                 rate={rate}
                 onNextRate={tool(() => setRate(nextRate(rate)))}
-                fullscreen={fullscreen}
-                onToggleFullscreen={tool(() => setFullscreen(!fullscreen))}
               />
             </View>
           </View>

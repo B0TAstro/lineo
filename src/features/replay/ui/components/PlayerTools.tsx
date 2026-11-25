@@ -10,7 +10,7 @@ export type Rate = (typeof RATES)[number];
 export const nextRate = (rate: Rate): Rate => RATES[(RATES.indexOf(rate) + 1) % RATES.length] ?? 1;
 const rateLabel = (rate: Rate) => `x${String(rate).replace('.', ',')}`;
 
-/** At the end of the seek bar: the ball tracking, the sound, the speed, full screen */
+/** At the end of the seek bar: the ball tracking, the sound, the speed */
 export function PlayerTools({
   tracking,
   onTrack,
@@ -18,8 +18,6 @@ export function PlayerTools({
   onToggleMute,
   rate,
   onNextRate,
-  fullscreen,
-  onToggleFullscreen,
 }: {
   tracking: boolean;
   onTrack: () => void;
@@ -27,8 +25,6 @@ export function PlayerTools({
   onToggleMute: () => void;
   rate: Rate;
   onNextRate: () => void;
-  fullscreen: boolean;
-  onToggleFullscreen: () => void;
 }) {
   return (
     <View style={styles.row}>
@@ -54,11 +50,6 @@ export function PlayerTools({
       >
         <Text style={styles.rateText}>{rateLabel(rate)}</Text>
       </Pressable>
-      <Tool
-        icon="fullscreen"
-        label={fullscreen ? 'Quitter le plein écran' : 'Plein écran'}
-        onPress={onToggleFullscreen}
-      />
     </View>
   );
 }
