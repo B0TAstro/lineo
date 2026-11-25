@@ -1,9 +1,8 @@
-import { lockAsync, OrientationLock } from 'expo-screen-orientation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import type { Court } from '@/sports/tennis';
 
-import { ClipPlayer, type VideoOrientation } from './ClipPlayer';
+import { ClipPlayer } from './ClipPlayer';
 import { DecisionPanel, type Side } from './components/DecisionPanel';
 import type { PointNav } from './components/PlayerTopBar';
 import type { ReplayOutcome } from '../logic/outcome';
@@ -43,16 +42,6 @@ export function ReplayScreen({
   const [index, setIndex] = useState(initialIndex);
   // Dev builds only: test videos instead of the match's points
   const [devClips, setDevClips] = useState<ReplayClip[]>();
-  const [orientation, setOrientation] = useState<VideoOrientation>('landscape');
-
-  // The screen turns with the video: a clip filmed upright is played upright, full height
-  useEffect(() => {
-    void lockAsync(
-      orientation === 'portrait' ? OrientationLock.PORTRAIT_UP : OrientationLock.LANDSCAPE,
-    );
-  }, [orientation]);
-  // Back to the score, which is landscape
-  useEffect(() => () => void lockAsync(OrientationLock.LANDSCAPE), []);
 
   const shown = devClips ?? clips;
   const clip = shown[index];
@@ -91,7 +80,6 @@ export function ReplayScreen({
           : (close) => <DecisionPanel sides={sides} onOutcome={onOutcome} onClose={close} />
       }
       devVideos={__DEV__ ? { on: devClips !== undefined, onToggle: toggleDevVideos } : undefined}
-      onVideoOrientation={setOrientation}
       onClose={onClose}
     />
   );

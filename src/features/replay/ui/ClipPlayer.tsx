@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { type ReactNode, useMemo, useRef, useState } from 'react';
-import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Video, { type VideoRef } from 'react-native-video';
@@ -26,8 +26,6 @@ const START_BEFORE_END_SECONDS = 1;
 /** A jump to a sound peak lands this long before it */
 const PEAK_LEAD_SECONDS = 0.15;
 
-export type VideoOrientation = 'portrait' | 'landscape';
-
 /**
  * Plays one point: one file almost always. When a point has several files they are stacked, all loaded, and only the active one is visible, so switching files needs no reload
  */
@@ -39,7 +37,6 @@ export function ClipPlayer({
   point,
   renderPanel,
   devVideos,
-  onVideoOrientation,
   onClose,
 }: {
   segments: readonly Segment[];
@@ -53,12 +50,8 @@ export function ClipPlayer({
   renderPanel: ((close: () => void) => ReactNode) | undefined;
   /** Dev builds only: the switch to the test videos, next to the panel button */
   devVideos: { on: boolean; onToggle: () => void } | undefined;
-  /** How the point was filmed, once its video is loaded: the screen turns to match it */
-  onVideoOrientation: (orientation: VideoOrientation) => void;
   onClose: () => void;
 }) {
-  const window = useWindowDimensions();
-  const portrait = window.height > window.width;
   const timeline = useMemo(() => buildTimeline(segments), [segments]);
   const initial = useMemo(() => {
     const t = Math.max(0, timeline.totalS - START_BEFORE_END_SECONDS);
@@ -176,17 +169,14 @@ export function ClipPlayer({
     />
   );
   const panel = panelShown ? (
-    <SafeAreaView
-      style={[styles.panel, portrait && styles.panelPortrait]}
-      edges={portrait ? ['bottom', 'left', 'right'] : ['top', 'bottom', 'right']}
-    >
+    <SafeAreaView style={styles.panel} edges={['top', 'bottom', 'right']}>
       {renderPanel(() => setPanelOpen(false))}
     </SafeAreaView>
   ) : null;
 
   if (timeline.segments.length === 0) {
     return (
-      <View style={[styles.container, portrait && styles.containerPortrait]}>
+      <View style={styles.container}>
         <View
           style={[styles.stage, { paddingTop: insets.top + 16, paddingLeft: insets.left + 24 }]}
         >
@@ -199,7 +189,7 @@ export function ClipPlayer({
   }
 
   return (
-    <View style={[styles.container, portrait && styles.containerPortrait]}>
+    <View style={styles.container}>
       <StatusBar hidden={fullscreen} />
       <View style={styles.stage}>
         <ZoomableView onTap={chrome.toggle}>
@@ -222,7 +212,6 @@ export function ClipPlayer({
               progressUpdateInterval={33}
               onLoad={(e) => {
                 if (index !== initial.index) return;
-                onVideoOrientation(e.naturalSize.orientation);
                 // Already on the right frame: no seek, so no onSeek event to wait for
                 if (initial.localS < 1 / fps) onInitialSeekDone();
                 else videoRefs.current[index]?.seek(initial.localS, 0);
@@ -358,7 +347,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#000',
   },
-  containerPortrait: { flexDirection: 'column' },
   stage: { flex: 1 },
   hidden: { opacity: 0 },
   hud: { position: 'absolute', left: 0, paddingLeft: 24 },
@@ -379,7 +367,6 @@ const styles = StyleSheet.create({
   bottomRow: { flexDirection: 'row', alignItems: 'center', gap: 18 },
   time: { fontFamily: fonts.light, fontSize: 13, color: 'rgba(255,255,255,0.8)' },
   panel: { width: 220, backgroundColor: colors.card },
-  panelPortrait: { width: undefined, maxHeight: '50%' },
   emptyTop: { paddingRight: 24 },
   emptyText: {
     fontFamily: fonts.light,
