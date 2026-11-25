@@ -259,6 +259,7 @@ export function MatchScreen({ session }: { session: MatchSession }) {
           initialIndex={replay.initialIndex}
           fps={camera.selectedFps ?? settings.fps}
           assistedReading={settings.assistedReading}
+          replayStart={settings.replayStart}
           court={session.form.court}
           sides={[
             { id: a.id, name: sideName(state, a.id), role: roleLabel(state, a.id) },

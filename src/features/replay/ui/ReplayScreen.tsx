@@ -15,6 +15,7 @@ type Props = {
   fps: number;
   /** The setting: the assisted reading card once the point is tracked */
   assistedReading: boolean;
+  replayStart: 'start' | 'end';
   court: Court;
   sides: readonly [Side, Side];
   onOutcome: (outcome: ReplayOutcome) => void;
@@ -34,6 +35,7 @@ export function ReplayScreen({
   initialIndex,
   fps,
   assistedReading,
+  replayStart,
   court,
   sides,
   onOutcome,
@@ -72,6 +74,7 @@ export function ReplayScreen({
       fps={clip.fps ?? fps}
       court={court}
       assistedReading={assistedReading}
+      replayStart={replayStart}
       point={point}
       renderPanel={
         // A test video is not a point of the match: nothing to decide

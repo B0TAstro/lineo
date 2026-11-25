@@ -8,6 +8,8 @@ export type Settings = {
   voice: boolean;
   /** The assisted reading card once the whole point is tracked */
   assistedReading: boolean;
+  /** Where the replay opens: the start of the point, or its last second (where the call is) */
+  replayStart: 'start' | 'end';
 };
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -15,10 +17,12 @@ export const DEFAULT_SETTINGS: Settings = {
   savedPoints: 2,
   voice: true,
   assistedReading: true,
+  replayStart: 'start',
 };
 
 export const FPS_CHOICES = [60, 30] as const;
 export const SAVED_POINTS_CHOICES = [1, 2, 3] as const;
+export const REPLAY_START_CHOICES = ['start', 'end'] as const;
 
 const oneOf = <T>(choices: readonly T[], value: unknown, fallback: T): T =>
   choices.includes(value as T) ? (value as T) : fallback;
@@ -39,5 +43,6 @@ export function parseSettings(text: string | undefined): Settings {
       typeof saved.assistedReading === 'boolean'
         ? saved.assistedReading
         : DEFAULT_SETTINGS.assistedReading,
+    replayStart: oneOf(REPLAY_START_CHOICES, saved.replayStart, DEFAULT_SETTINGS.replayStart),
   };
 }

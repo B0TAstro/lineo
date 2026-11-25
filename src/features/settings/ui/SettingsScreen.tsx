@@ -1,17 +1,26 @@
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import type { ReactNode } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Icon } from '@/shared/ui/Icon';
 import { IconButton } from '@/shared/ui/IconButton';
 import { ScreenTitle } from '@/shared/ui/ScreenTitle';
 import { colors, fonts, radius, space, type } from '@/shared/ui/theme';
 import { Toggle } from '@/shared/ui/Toggle';
 
-import { FPS_CHOICES, SAVED_POINTS_CHOICES } from '../logic/settings';
+import { SelectRow } from './SelectRow';
+import { FPS_CHOICES, REPLAY_START_CHOICES, SAVED_POINTS_CHOICES } from '../logic/settings';
 import { appSettings, useSettings } from '../useSettings';
+
+const REPLAY_START_LABELS = { start: 'Au début du point', end: 'Sur la fin du point' } as const;
+
+/** UI only: the videos always go at the end of the match, the other choices are not built yet */
+const VIDEO_DELETION = [
+  { value: 'always', label: 'Toujours' },
+  { value: 'never', label: 'Non', disabled: true },
+  { value: 'exceptReviewed', label: 'Sauf les points revus', disabled: true },
+] as const;
 
 /**
  * Opened from the home screen, or over a match: the settings apply from the next match (the
@@ -28,17 +37,6 @@ export function SettingsScreen({
 } = {}) {
   const settings = useSettings();
   const update = (changes: Parameters<typeof appSettings.update>[0]) => appSettings.update(changes);
-
-  const pick = <T extends number>(
-    title: string,
-    choices: readonly T[],
-    label: (value: T) => string,
-    onPick: (value: T) => void,
-  ) =>
-    Alert.alert(title, undefined, [
-      ...choices.map((value) => ({ text: label(value), onPress: () => onPick(value) })),
-      { text: 'Annuler', style: 'cancel' as const },
-    ]);
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -59,29 +57,20 @@ export function SettingsScreen({
         )}
 
         <Group label="Enregistrement">
-          <Row
+          <SelectRow
             label="Images par seconde"
-            value={`${settings.fps} i/s`}
-            onPress={() =>
-              pick(
-                'Images par seconde',
-                FPS_CHOICES,
-                (fps) => `${fps} i/s`,
-                (fps) => update({ fps }),
-              )
-            }
+            value={settings.fps}
+            options={FPS_CHOICES.map((fps) => ({ value: fps, label: `${fps} i/s` }))}
+            onChange={(fps) => update({ fps })}
           />
-          <Row
+          <SelectRow
             label="Points gardés en mémoire"
-            value={String(settings.savedPoints)}
-            onPress={() =>
-              pick(
-                'Points gardés en mémoire',
-                SAVED_POINTS_CHOICES,
-                (n) => `${n} point${n > 1 ? 's' : ''}`,
-                (savedPoints) => update({ savedPoints }),
-              )
-            }
+            value={settings.savedPoints}
+            options={SAVED_POINTS_CHOICES.map((n) => ({
+              value: n,
+              label: `${n} point${n > 1 ? 's' : ''}`,
+            }))}
+            onChange={(savedPoints) => update({ savedPoints })}
             last
           />
         </Group>
@@ -94,17 +83,33 @@ export function SettingsScreen({
               onChange={(voice) => update({ voice })}
             />
           </Row>
-          <Row label="Lecture assistée du replay" last>
+          <Row label="Lecture assistée du replay">
             <Toggle
               value={settings.assistedReading}
               label="Lecture assistée du replay"
               onChange={(assistedReading) => update({ assistedReading })}
             />
           </Row>
+          <SelectRow
+            label="Le replay s’ouvre"
+            value={settings.replayStart}
+            options={REPLAY_START_CHOICES.map((start) => ({
+              value: start,
+              label: REPLAY_START_LABELS[start],
+            }))}
+            onChange={(replayStart) => update({ replayStart })}
+            last
+          />
         </Group>
 
         <Group label="Vos données">
-          <Row label="Vidéos supprimées en fin de match" value="Toujours" last />
+          <SelectRow
+            label="Vidéos supprimées en fin de match"
+            value="always"
+            options={VIDEO_DELETION}
+            onChange={() => {}}
+            last
+          />
         </Group>
 
         <Text style={styles.note}>
@@ -119,7 +124,7 @@ export function SettingsScreen({
           <Text style={styles.linkDot}>·</Text>
           <Text style={styles.link}>Confidentialité</Text>
         </View>
-        <Text style={styles.version}>Lineo · v{Constants.expoConfig?.version ?? '—'}</Text>
+        <Text style={styles.version}>Lineo v{Constants.expoConfig?.version ?? '—'}</Text>
       </View>
     </SafeAreaView>
   );
@@ -134,32 +139,13 @@ function Group({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-/** A line of a card: a label, then a value with its chevron (tap to change) or a control */
-function Row({
-  label,
-  value,
-  onPress,
-  last,
-  children,
-}: {
-  label: string;
-  value?: string;
-  onPress?: () => void;
-  last?: boolean;
-  children?: ReactNode;
-}) {
+/** A line of a card: a label, then its control */
+function Row({ label, last, children }: { label: string; last?: boolean; children: ReactNode }) {
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={!onPress}
-      accessibilityRole={onPress ? 'button' : undefined}
-      style={({ pressed }) => [styles.row, !last && styles.rowLine, pressed && styles.pressed]}
-    >
+    <View style={[styles.row, !last && styles.rowLine]}>
       <Text style={styles.rowLabel}>{label}</Text>
-      {value !== undefined && <Text style={styles.rowValue}>{value}</Text>}
-      {onPress && <Icon name="chevronRight" />}
       {children}
-    </Pressable>
+    </View>
   );
 }
 
@@ -183,9 +169,7 @@ const styles = StyleSheet.create({
   },
   row: { height: 56, flexDirection: 'row', alignItems: 'center', gap: 12 },
   rowLine: { borderBottomWidth: 1, borderBottomColor: colors.divider },
-  pressed: { opacity: 0.6 },
   rowLabel: { flex: 1, fontFamily: fonts.regular, fontSize: 16, color: colors.text },
-  rowValue: { fontFamily: fonts.light, fontSize: 16, color: colors.textDim },
   note: { fontFamily: fonts.light, fontSize: 14, lineHeight: 21, color: colors.textSoft },
   footer: { alignItems: 'center', gap: space.s, paddingBottom: space.m },
   links: { flexDirection: 'row', gap: 10 },

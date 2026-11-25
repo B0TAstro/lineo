@@ -20,7 +20,7 @@ import { PlayerTools, nextRate, type Rate } from './components/PlayerTools';
 import { type PointNav, PlayerTopBar } from './components/PlayerTopBar';
 import { Seekbar } from './components/Seekbar';
 
-/** Where a point opens, in seconds before its end (the end is what players argue about) */
+/** Opened on the end of the point: this long before it (the end is what players argue about) */
 const START_BEFORE_END_SECONDS = 1;
 /** A jump to a sound peak lands this long before it */
 const PEAK_LEAD_SECONDS = 0.15;
@@ -33,6 +33,7 @@ export function ClipPlayer({
   fps,
   court,
   assistedReading,
+  replayStart,
   point,
   renderPanel,
   devVideos,
@@ -44,6 +45,8 @@ export function ClipPlayer({
   court: Court;
   /** The setting: shows the assisted reading card once the point is tracked */
   assistedReading: boolean;
+  /** From the settings: the start of the point, or its last second */
+  replayStart: 'start' | 'end';
   point: PointNav;
   /** The decision panel beside the video, with its button to close it; none for a test video */
   renderPanel: ((close: () => void) => ReactNode) | undefined;
@@ -53,9 +56,9 @@ export function ClipPlayer({
 }) {
   const timeline = useMemo(() => buildTimeline(segments), [segments]);
   const initial = useMemo(() => {
-    const t = Math.max(0, timeline.totalS - START_BEFORE_END_SECONDS);
+    const t = replayStart === 'end' ? Math.max(0, timeline.totalS - START_BEFORE_END_SECONDS) : 0;
     return { t, ...locate(timeline, t) };
-  }, [timeline]);
+  }, [timeline, replayStart]);
 
   const videoRefs = useRef<(VideoRef | null)[]>([]);
   const timeRef = useRef(initial.t);
