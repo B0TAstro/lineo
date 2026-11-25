@@ -9,7 +9,7 @@ import { useClipRecorder, useClipsFromLog, useMatchCamera } from '@/features/rec
 import { outcomeEvents, ReplayScreen, useVarReplay, varSummary } from '@/features/replay';
 import { type PointControls, ScoreDisplay } from '@/features/score';
 import { InviteOverlay, linkStatus, type MatchSession } from '@/features/session';
-import { appSettings } from '@/features/settings';
+import { appSettings, SettingsScreen } from '@/features/settings';
 import { heardLine, useVoice } from '@/features/voice';
 import { useAppActive } from '@/shared/native/useAppActive';
 import { Button } from '@/shared/ui/Button';
@@ -42,6 +42,7 @@ export function MatchScreen({ session }: { session: MatchSession }) {
   const [showQr, setShowQr] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [voiceOn, setVoiceOn] = useState(settings.voice);
+  const [showSettings, setShowSettings] = useState(false);
   // On this phone only: each phone films for itself, a pause is not an event of the match
   const [paused, setPaused] = useState(false);
 
@@ -158,13 +159,12 @@ export function MatchScreen({ session }: { session: MatchSession }) {
         <View style={styles.main}>
           <View style={styles.top}>
             <StatusPill recording={stats.recording} link={link} />
-            {/* The settings open from the home screen: they apply when a match starts */}
+            {/* The match keeps the settings it started with: changes are for the next one */}
             <IconButton
               icon="settings"
               label="Paramètres"
               variant="plain"
-              disabled
-              onPress={() => {}}
+              onPress={() => setShowSettings(true)}
             />
           </View>
           <View style={styles.board}>
@@ -238,6 +238,12 @@ export function MatchScreen({ session }: { session: MatchSession }) {
           ) : undefined
         }
       />
+
+      {showSettings && (
+        <View style={StyleSheet.absoluteFill}>
+          <SettingsScreen duringMatch onClose={() => setShowSettings(false)} />
+        </View>
+      )}
 
       {showQr && (
         <InviteOverlay

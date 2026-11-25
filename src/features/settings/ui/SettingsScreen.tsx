@@ -13,8 +13,19 @@ import { Toggle } from '@/shared/ui/Toggle';
 import { FPS_CHOICES, SAVED_POINTS_CHOICES } from '../logic/settings';
 import { appSettings, useSettings } from '../useSettings';
 
-/** Opened from the home screen: the settings apply from the next match */
-export function SettingsScreen() {
+/**
+ * Opened from the home screen, or over a match: the settings apply from the next match (the
+ * camera and the buffer keep theirs for the whole match)
+ */
+export function SettingsScreen({
+  duringMatch,
+  onClose,
+}: {
+  /** Opened over a match: says the changes wait for the next one */
+  duringMatch?: boolean;
+  /** Closes the overlay; on its own route, the screen goes back */
+  onClose?: () => void;
+} = {}) {
   const settings = useSettings();
   const update = (changes: Parameters<typeof appSettings.update>[0]) => appSettings.update(changes);
 
@@ -32,10 +43,20 @@ export function SettingsScreen() {
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.header}>
-        <IconButton icon="close" label="Fermer" variant="plain" onPress={() => router.back()} />
+        <IconButton
+          icon="close"
+          label="Fermer"
+          variant="plain"
+          onPress={onClose ?? (() => router.back())}
+        />
       </View>
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenTitle section="Lineo" title="Paramètres" />
+        {duringMatch && (
+          <Text style={styles.note}>
+            S’applique au prochain match : celui-ci garde ses réglages.
+          </Text>
+        )}
 
         <Group label="Enregistrement">
           <Row
