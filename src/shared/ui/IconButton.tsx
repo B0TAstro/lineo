@@ -1,42 +1,67 @@
-import { Ionicons } from '@expo/vector-icons';
-import type { ComponentProps } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 
-import { colors, radius } from './theme';
+import { Icon, type IconName } from './Icon';
+import { colors } from './theme';
 
-export type IconName = ComponentProps<typeof Ionicons>['name'];
-
-/** A small square button for a setting, out of the way of the match buttons. */
+/**
+ * A round icon button: `tool` in the match screen's rail, `plain` for back and close at the top of
+ * a screen, `overlay` over the camera image
+ */
 export function IconButton({
   icon,
   label,
+  variant = 'tool',
+  selected,
+  disabled,
   onPress,
 }: {
   icon: IconName;
   label: string;
+  variant?: 'tool' | 'plain' | 'overlay';
+  /** A switch that is on */
+  selected?: boolean;
+  disabled?: boolean;
   onPress: () => void;
 }) {
   return (
     <Pressable
       onPress={onPress}
+      disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={label}
+      accessibilityState={{ disabled: disabled ?? false, selected: selected ?? false }}
       hitSlop={8}
-      style={({ pressed }) => [styles.tool, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.base,
+        styles[variant],
+        selected && styles.selected,
+        (pressed || disabled) && styles.dim,
+      ]}
     >
-      <Ionicons name={icon} size={24} color={colors.line} />
+      <Icon name={icon} {...(selected && { color: colors.onAccent })} />
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+  base: { alignItems: 'center', justifyContent: 'center' },
   tool: {
     width: 48,
     height: 48,
-    borderRadius: radius,
-    backgroundColor: colors.inkSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: colors.card,
   },
-  pressed: { opacity: 0.5 },
+  plain: { width: 44, height: 44 },
+  overlay: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: 'rgba(10,10,10,0.7)',
+  },
+  selected: { backgroundColor: colors.warning, borderColor: colors.warning },
+  dim: { opacity: 0.4 },
 });

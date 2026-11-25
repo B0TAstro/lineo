@@ -1,28 +1,35 @@
 import { useKeepAwake } from 'expo-keep-awake';
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BallHud, BallTrackOverlay, useLiveBallTrack } from '@/features/ball-tracking';
-import { TARGET_FPS, useClipRecorder, useClipsFromLog, useMatchCamera } from '@/features/recording';
-import { outcomeEvents, ReplayScreen, useVarReplay } from '@/features/replay';
-import { ScoreDisplay } from '@/features/score';
-import { InviteOverlay, linkLabel, type MatchSession } from '@/features/session';
+import { useClipRecorder, useClipsFromLog, useMatchCamera } from '@/features/recording';
+import { outcomeEvents, ReplayScreen, useVarReplay, varSummary } from '@/features/replay';
+import { type PointControls, ScoreDisplay } from '@/features/score';
+import { InviteOverlay, linkStatus, type MatchSession } from '@/features/session';
+import { appSettings } from '@/features/settings';
 import { heardLine, useVoice } from '@/features/voice';
 import { useAppActive } from '@/shared/native/useAppActive';
 import { Button } from '@/shared/ui/Button';
+import { IconButton } from '@/shared/ui/IconButton';
 import { MessageScreen } from '@/shared/ui/MessageScreen';
-import { colors } from '@/shared/ui/theme';
-import { sideName, toMatchSetup } from '@/sports/tennis';
+import { colors, fonts, space } from '@/shared/ui/theme';
+import { roleLabel, setScores, type SideId, sideName, toMatchSetup } from '@/sports/tennis';
 
 import { DevStats } from './DevStats';
 import { MatchControls } from './MatchControls';
-import { MatchSidebar } from './MatchSidebar';
+import { MatchEndScreen } from './MatchEndScreen';
+import { MatchInfo } from './MatchInfo';
+import { StatusPill } from './StatusPill';
+import { MatchClock } from '../logic/MatchClock';
 
 export function MatchScreen({ session }: { session: MatchSession }) {
   const { view, dispatch, log } = session;
   const { state } = view;
+  // Read once: the camera and the buffer keep their settings for the whole match
+  const [settings] = useState(() => appSettings.store.get());
   const [a, b] = state.config.sides;
   const setup = useMemo(() => toMatchSetup(session.form), [session.form]);
 
@@ -33,12 +40,17 @@ export function MatchScreen({ session }: { session: MatchSession }) {
   const camera = useMatchCamera(liveBall.onFrame);
   const appActive = useAppActive();
   const [showQr, setShowQr] = useState(false);
-  const [voiceOn, setVoiceOn] = useState(true);
+  const [infoOpen, setInfoOpen] = useState(false);
+  const [voiceOn, setVoiceOn] = useState(settings.voice);
 
   // Recording pauses during the replay, to spare the phone (heat, battery), and in the background, where the OS stops the camera
   const matchOver = state.matchWonBy !== undefined;
   const cameraActive = !view.varOpen && appActive && !matchOver;
-  const { stats, clips } = useClipRecorder(camera.videoOutput, camera.running && cameraActive);
+  const { stats, clips } = useClipRecorder(
+    camera.videoOutput,
+    camera.running && cameraActive,
+    settings.savedPoints,
+  );
   useClipsFromLog(log, setup, clips);
   const replay = useVarReplay(view, log, clips);
 
@@ -49,11 +61,35 @@ export function MatchScreen({ session }: { session: MatchSession }) {
     onPoints: (winners) => dispatch({ type: 'point-called', winners, afterSeq: view.seq }),
   });
 
+  const sets = useMemo(() => setScores(setup, view.points), [setup, view.points]);
+  const vars = useMemo(() => varSummary(log), [log]);
+  const [clock] = useState(() => new MatchClock());
+  useEffect(() => clock.varChanged(view.varOpen), [clock, view.varOpen]);
+  // Nothing outlives the match (GDPR): the videos go as soon as it is won, the end screen says so
+  useEffect(() => {
+    if (!matchOver) return;
+    clock.finish();
+    clips.discard();
+  }, [matchOver, clock, clips]);
+  const link = linkStatus(session);
+
   const leave = () =>
     Alert.alert('Quitter le match ?', 'Les vidéos seront supprimées de ce téléphone.', [
       { text: 'Continuer', style: 'cancel' },
       { text: 'Quitter', style: 'destructive', onPress: () => router.replace('/') },
     ]);
+
+  if (matchOver && !view.varOpen) {
+    return (
+      <MatchEndScreen
+        state={state}
+        sets={sets}
+        teams={session.form.teams}
+        vars={vars}
+        {...clock.summary()}
+      />
+    );
+  }
 
   if (!camera.permission.granted) {
     return (
@@ -70,84 +106,138 @@ export function MatchScreen({ session }: { session: MatchSession }) {
       <MessageScreen
         message={camera.facing === 'front' ? 'Aucune caméra avant.' : 'Aucune caméra arrière.'}
       >
-        <Button label="Changer de caméra" variant="outline" onPress={camera.flip} />
+        <Button label="Changer de caméra" variant="secondary" onPress={camera.flip} />
       </MessageScreen>
     );
   }
 
   const heard = heardLine(voice);
+  const undo = () =>
+    Alert.alert('Annuler le dernier point ?', 'Le score revient au point précédent.', [
+      { text: 'Non', style: 'cancel' },
+      {
+        text: 'Annuler le point',
+        style: 'destructive',
+        onPress: () => dispatch({ type: 'point-undone' }),
+      },
+    ]);
+  const controls: PointControls = {
+    canAdd: view.pending === undefined && !matchOver,
+    // Only the side that won the last point can take it back
+    canRemove: (side: SideId) => view.pending === undefined && view.points.at(-1) === side,
+    onAdd: (side) => dispatch({ type: 'point-proposed', winner: side }),
+    onRemove: undo,
+  };
 
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safe} edges={['top', 'bottom', 'left', 'right']}>
-        <View style={styles.side}>
-          <MatchSidebar
-            camera={camera}
-            device={camera.device}
-            cameraActive={cameraActive}
-            recording={stats.recording}
-            matchOver={matchOver}
-            linkText={linkLabel(session)}
-            voiceStatus={voice.status}
-            voiceOn={voiceOn}
-            onToggleVoice={() => setVoiceOn(!voiceOn)}
-            onInvite={session.role === 'host' ? () => setShowQr(true) : undefined}
-            onLeave={leave}
-            previewOverlay={
-              liveBall.onFrame && liveBall.frame ? (
-                <BallTrackOverlay
-                  points={liveBall.trail}
-                  video={liveBall.frame}
-                  timeS={liveBall.t}
-                />
-              ) : undefined
+        <View style={styles.rail}>
+          <IconButton icon="info" label="Infos du match" onPress={() => setInfoOpen(true)} />
+          {session.role === 'host' && (
+            <IconButton icon="qr" label="Inviter un téléphone" onPress={() => setShowQr(true)} />
+          )}
+          <IconButton
+            icon="cameraSwitch"
+            label={
+              camera.facing === 'back' ? 'Passer à la caméra avant' : 'Passer à la caméra arrière'
             }
+            onPress={camera.flip}
+          />
+          <IconButton
+            icon={voiceOn ? 'mic' : 'micOff'}
+            label={voiceOn ? 'Couper la voix' : 'Activer la voix'}
+            onPress={() => setVoiceOn(!voiceOn)}
           />
         </View>
 
-        <View style={styles.middle}>
+        <View style={styles.main}>
+          <View style={styles.top}>
+            <StatusPill recording={stats.recording} link={link} />
+            {/* The settings open from the home screen: they apply when a match starts */}
+            <IconButton
+              icon="settings"
+              label="Paramètres"
+              variant="plain"
+              disabled
+              onPress={() => {}}
+            />
+          </View>
           <View style={styles.board}>
-            <ScoreDisplay state={state} />
+            <ScoreDisplay
+              state={state}
+              sets={sets}
+              teams={session.form.teams}
+              controls={controls}
+            />
             {heard !== null && (
               <Text style={styles.heard} numberOfLines={1}>
                 {heard}
               </Text>
             )}
           </View>
-          {__DEV__ && (
-            <DevStats
-              fps={camera.fps}
-              selectedFps={camera.selectedFps}
-              stats={stats}
-              sessionId={session.sessionId}
-              eventCount={log.length}
-              voiceError={voice.error}
-              liveBall={liveBallOn}
-              liveBallMs={liveBall.ms}
-              onToggleLiveBall={() => setLiveBallOn(!liveBallOn)}
-            />
-          )}
-          {__DEV__ && liveBall.onFrame && liveBall.frame && (
-            <BallHud
-              points={liveBall.trail}
-              timeS={liveBall.t}
-              frame={liveBall.frame}
-              frames={liveBall.frames}
-              seen={liveBall.seen}
-              extra={`${liveBall.ms.toFixed(0)} ms / image`}
-            />
-          )}
-        </View>
-
-        <View style={styles.side}>
-          <MatchControls view={view} opening={view.varOpen && !replay} dispatch={dispatch} />
+          <MatchControls
+            view={view}
+            opening={view.varOpen && !replay}
+            dispatch={dispatch}
+            onLeave={leave}
+          />
         </View>
       </SafeAreaView>
+
+      <MatchInfo
+        open={infoOpen}
+        onClose={() => setInfoOpen(false)}
+        camera={camera}
+        device={camera.device}
+        cameraActive={cameraActive}
+        recording={stats.recording}
+        link={link}
+        voiceStatus={voice.status}
+        voiceOn={voiceOn}
+        onToggleVoice={() => setVoiceOn(!voiceOn)}
+        stats={stats}
+        targetFps={settings.fps}
+        savedPoints={settings.savedPoints}
+        previewOverlay={
+          liveBall.onFrame && liveBall.frame ? (
+            <BallTrackOverlay points={liveBall.trail} video={liveBall.frame} timeS={liveBall.t} />
+          ) : undefined
+        }
+        dev={
+          __DEV__ ? (
+            <>
+              <DevStats
+                fps={camera.fps}
+                selectedFps={camera.selectedFps}
+                stats={stats}
+                sessionId={session.sessionId}
+                eventCount={log.length}
+                voiceError={voice.error}
+                liveBall={liveBallOn}
+                liveBallMs={liveBall.ms}
+                onToggleLiveBall={() => setLiveBallOn(!liveBallOn)}
+              />
+              {liveBall.onFrame && liveBall.frame && (
+                <BallHud
+                  points={liveBall.trail}
+                  timeS={liveBall.t}
+                  frame={liveBall.frame}
+                  frames={liveBall.frames}
+                  seen={liveBall.seen}
+                  extra={`${liveBall.ms.toFixed(0)} ms / image`}
+                />
+              )}
+            </>
+          ) : undefined
+        }
+      />
 
       {showQr && (
         <InviteOverlay
           sessionId={session.sessionId}
           sessionKey={session.key}
+          phones={session.role === 'host' ? session.guests + 1 : 1}
           onClose={() => setShowQr(false)}
         />
       )}
@@ -156,11 +246,12 @@ export function MatchScreen({ session }: { session: MatchSession }) {
         <ReplayScreen
           clips={replay.clips}
           initialIndex={replay.initialIndex}
-          fps={camera.selectedFps ?? TARGET_FPS}
+          fps={camera.selectedFps ?? settings.fps}
+          assistedReading={settings.assistedReading}
           court={session.form.court}
           sides={[
-            { id: a.id, name: sideName(state, a.id) },
-            { id: b.id, name: sideName(state, b.id) },
+            { id: a.id, name: sideName(state, a.id), role: roleLabel(state, a.id) },
+            { id: b.id, name: sideName(state, b.id), role: roleLabel(state, b.id) },
           ]}
           // The players decided: the outcome goes to the log, then every phone goes back to the score
           onOutcome={(outcome) => outcomeEvents(view, outcome).forEach(dispatch)}
@@ -172,10 +263,17 @@ export function MatchScreen({ session }: { session: MatchSession }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.ink },
-  safe: { flex: 1, flexDirection: 'row', padding: 12, gap: 16 },
-  side: { width: 220, gap: 10, justifyContent: 'center' },
-  middle: { flex: 1 },
-  board: { flex: 1, justifyContent: 'center', gap: 12 },
-  heard: { color: colors.lineDim, fontSize: 18, textAlign: 'center' },
+  container: { flex: 1, backgroundColor: colors.bg },
+  safe: {
+    flex: 1,
+    flexDirection: 'row',
+    paddingHorizontal: space.l,
+    paddingVertical: space.s,
+    gap: space.l,
+  },
+  rail: { gap: 12, paddingTop: 56 },
+  main: { flex: 1, paddingBottom: space.m },
+  top: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: space.s },
+  board: { flex: 1, justifyContent: 'center' },
+  heard: { fontFamily: fonts.light, fontSize: 15, color: colors.textSoft, textAlign: 'center' },
 });

@@ -25,6 +25,8 @@ const copy = (clip: Clip): Clip => ({ ...clip, segments: [...clip.segments] });
 export type ClipRecorderDeps = {
   createRecorder: CreateVideoRecorder;
   deleteFile: (path: string) => void;
+  /** Finished points kept on disk, on top of the one being recorded (the setting) */
+  maxSaved?: number;
 };
 
 /**
@@ -32,14 +34,15 @@ export type ClipRecorderDeps = {
  * Tasks run in order: a cut waits for the next file
  */
 export class ClipRecorder {
-  private readonly buffer = new ClipBuffer(MAX_SAVED_POINTS);
+  private readonly buffer: ClipBuffer;
   private readonly recorder: VideoRecorder;
   private readonly deleteFile: (path: string) => void;
   readonly stats: Store<ClipStats>;
   private chain: Promise<unknown> = Promise.resolve();
   private trimTimer: ReturnType<typeof setInterval> | undefined;
 
-  constructor({ createRecorder, deleteFile }: ClipRecorderDeps) {
+  constructor({ createRecorder, deleteFile, maxSaved = MAX_SAVED_POINTS }: ClipRecorderDeps) {
+    this.buffer = new ClipBuffer(maxSaved);
     this.deleteFile = deleteFile;
     this.recorder = createRecorder({
       onSegment: (segment) => this.delete(this.buffer.addSegment(segment)),

@@ -36,88 +36,53 @@ Objectif : moins d'une minute entre l'ouverture de l'app et le premier point fil
 
 ## 5. Écrans
 
-### 5.1 Écran 1 · Accueil
-Deux gros boutons empilés : **Créer une session** (vert) et **Rejoindre une session** (contour blanc). Rien d'autre.
+Maquette et design system : Figma `lf5sfGc7zUZLD9BE8juhNG`, pages « Maquette » et « Design System ». Ce qui n'a pas encore de logique est en place dans l'interface et marqué `UI only` dans le code.
 
-### 5.2 Écran 2a · Créer
-Un seul écran, tout pré-rempli : simple ou double, noms des joueurs (prénoms ou initiales), format du match. Bouton bas pleine largeur : **Créer**.
+### 5.1 Accueil
+La roue en haut à droite ouvre les Paramètres. Le logo complet et « la ligne a toujours raison. », une carte de trois conseils (posez le téléphone, jouez normalement, un doute : VAR), puis **Créer une session** (citron) et **Rejoindre une session** (contour blanc). *À venir* : liens légaux.
 
-### 5.3 Écran 2b · Rejoindre
-Caméra ouverte avec un cadre de visée : « Scannez le QR code du téléphone hôte ».
+### 5.2 Créer une session (3 étapes, tout pré-rempli)
+1. **Type de match** : format simple / double, nombre de sets, dernier set (super tie-break ou set normal), à 40-40 (avantage ou point décisif).
+2. **Le terrain** : lieu et surface, qui règlent la détection de la balle.
+3. **Les joueurs** (simple) ou **les équipes** (double : noms d'équipe, 4 joueurs répartis A / B, premier serveur).
 
-### 5.4 Écran 3 · Connexion et placement
-- Hôte : QR code très grand et liste des téléphones connectés (0, 1, 2…), avec le lien de chacun (Bluetooth, ou Wi-Fi en secours).
-- On peut commencer **seul**, sans attendre d'invité. Un autre téléphone peut rejoindre plus tard en scannant le QR code (accessible depuis le menu de l'écran Score).
-- Accord des joueurs : une case par camp (« vidéo gardée sur ce téléphone, supprimée en fin de match »).
-- Aperçu caméra plein écran, en paysage : « Posez le téléphone en hauteur, au fond du court ».
-- Lignes du court détectées en surimpression (vertes = trouvées). Sinon : « Touchez les 4 coins du court ».
-- Bouton **Commencer le match**.
+Points d'étape au-dessus de **Suivant** / **Retour** / **Créer**. *UI only* : le double, les 5 sets (le score reste en simple, 2 sets gagnants ; en double, le match se joue entre les deux noms d'équipe).
 
-### 5.5 Écran 4 · Score (pendant tout le match)
-Paysage, **fond noir**, uniquement le score et deux boutons.
+### 5.3 Rejoindre
+La caméra dans une carte, avec les 4 coins citron du viseur. Le scan rejoint seul. *UI only* : la phrase de session (une phrase de 3 mots ne peut pas porter la clé de 32 octets du QR : à concevoir).
 
-```
-┌────────────────────────────────────────────────────────────────┐
-│ ● REC   Bluetooth ✓                             Set 1 · 4 / 3  │
-│                                                                │
-│      LÉA  •                          30                        │
-│      TOM                             15                        │
-│                                                                │
-│  ┌──────────────────────────┐   ┌───────────────────────────┐  │
-│  │           VAR            │   │      Contester score      │  │
-│  └──────────────────────────┘   └───────────────────────────┘  │
-└────────────────────────────────────────────────────────────────┘
-```
+### 5.4 Ajouter un téléphone (depuis le match, hôte seulement)
+Consigne, nombre de téléphones dans la session, et le QR code sur sa carte blanche. *UI only* : la phrase.
 
-- Points en très grand (≥ 40 % de la hauteur), jeux et sets en haut à droite, pastille jaune devant le serveur.
-- **VAR** (jaune balle) : litige sur une balle, ouvre le replay sur les deux téléphones.
-- **Contester score** (contour blanc) : le score affiché est faux, ouvre la correction.
-- v0.1 : le gagnant du point touche sa ligne de score (+1), l'autre téléphone affiche « Point pour Léa ? Valider ». v0.3 : le score change seul à l'annonce du serveur, avec un bip.
-- Après 10 s sans interaction, la luminosité baisse. Un tap la rétablit.
+### 5.5 Score (pendant tout le match)
+Paysage, fond noir, le score en grand : rien d'autre ne doit attirer l'œil.
+- À gauche, un rail d'icônes : Infos, QR (hôte), changer de caméra, micro.
+- En haut à droite : la pastille d'état (REC, Bluetooth, téléphones liés, état du lien), repliable.
+- Au centre : chaque camp avec **−** (retirer le dernier point, seulement le camp qui l'a gagné) et **+** (proposer le point), la pastille du serveur, les points en Outfit 200 ; entre les deux, les jeux de chaque set et « SET 3 » / « TIE-BREAK ». En double, les prénoms sous le nom d'équipe.
+- En bas : **Quitter**, **Pause** (*UI only*), **VAR** (citron). Un point proposé prend la place de Quitter et Pause : « Point pour Léa ? » avec Refuser / Valider.
+- **Infos** : le retour caméra, la liaison (Bluetooth, Wi-Fi *à venir*, voix), REC avec les images par seconde mesurées, et la configuration (points en mémoire, taille d'un point, stockage, cadence). La caméra tourne en permanence, même panneau fermé. *UI only* : Calibrer (v0.7).
 
-### 5.6 Écran 5 · Replay (litige sur une balle)
-S'ouvre **sur tous les téléphones de la session en même temps**, quel que soit celui où l'on a appuyé sur VAR. Chacun montre le même point depuis sa propre caméra. Avec un seul téléphone, c'est le replay local.
+### 5.6 Replay (litige sur une balle)
+S'ouvre **sur tous les téléphones de la session en même temps**, chacun avec sa propre caméra. Un vrai lecteur, dont les contrôles s'effacent après 3 s sans activité (un tap les rappelle) :
+- En haut : retour au score, le point (« POINT EN COURS ») et ses flèches, le panneau de décision.
+- Au centre : image précédente, son précédent, lecture, son suivant, image suivante.
+- En bas : la barre de lecture (tap ou glisser) avec un **losange citron par son fort**, puis ✦ suivi de la balle, son, vitesse **x1 → x0,5 → x0,25**, plein écran.
+- S'ouvre à x1, une seconde avant la fin du point. Pincer pour zoomer, double-tap pour revenir. Le son ne joue qu'à x1.
+- Le panneau de décision : Point Léa, Point Tom, Point rejoué, puis l'autre camp valide. **← Retour** ferme sans rien changer.
+- Le suivi de la balle : une sphère citron, une traînée blanche légère, et une marque au sol à chaque son fort (*UI only* : un son n'est pas encore un rebond).
+- Build dev : l'icône robot remplace les points du match par les vidéos de test.
 
-À challenger en test : après v1.0, un sélecteur d'angle (« Ce téléphone · Côté nord · Côté sud ») permettrait de voir sur un seul écran un extrait court filmé par un autre téléphone, transféré en Wi-Fi local uniquement. Doit ressembler à un ralenti de télévision.
+### 5.7 Lecture assistée (v0.9, *UI only*)
+Quand le suivi a analysé tout le point, une carte s'ouvre sur la vidéo : « 70 % dehors », la jauge dedans / incertain / dehors, rebond, ligne, marge d'erreur. Repliée, elle devient une pastille. Entre 40 % et 60 % : « incertain ». Sans calcul, un build release montre des tirets ; un build dev montre les chiffres de la maquette marqués « Aperçu ». Jamais un chiffre inventé devant les joueurs.
 
-```
-┌────────────────────────────────────────────────────────────────┐
-│  ← Retour au score            Point 23 · Caméra côté nord      │
-│                                                                │
-│                    [ vidéo plein écran, zoomable ]             │
-│                                                                │
-│  ◀◀ image   ▶ / ❚❚   image ▶▶      x0.25  x0.5  x1            │
-│  ├─────────●────────◆─────────────◆───────────────────────┤   │
-│                                                                │
-│  [ Point Léa ]      [ Point Tom ]      [ Point rejoué ]        │
-└────────────────────────────────────────────────────────────────┘
-```
+### 5.8 Corriger le score
+Aujourd'hui : **−** à côté du camp qui a gagné le dernier point. *À venir* : la liste des derniers points, pour corriger plus loin en arrière.
 
-- Vidéo bord à bord, commandes sur une barre noire semi-opaque.
-- Ouvre au ralenti x0.5 sur la dernière seconde du point.
-- Pincer pour zoomer, glisser pour se déplacer, double-tap pour revenir.
-- Timeline épaisse (doigt), rebonds détectés en losanges jaunes (v0.9).
-- Sélecteur de point (point en cours, précédent).
-- Trois boutons toujours visibles, qui servent uniquement à **saisir le résultat décidé par les joueurs** : point pour un camp, point pour l'autre, point rejoué. Le choix est envoyé à l'autre camp, qui doit confirmer.
-- **← Retour au score** ferme le replay sans rien changer : l'app ne gère pas un désaccord qui persiste.
-- v0.9 : une suggestion chiffrée peut s'afficher (« 80 % sûr que la balle est sortie »), jamais un avis tranché, et aucun bouton ne l'applique d'office.
+### 5.9 Paramètres
+Enregistrement (images par seconde, points gardés en mémoire), pendant le match (score à la voix, lecture assistée du replay), vos données (vidéos supprimées en fin de match : toujours), la phrase « tout est filmé et traité sur ce téléphone », puis la version. Les réglages s'appliquent au match suivant. *UI only* : conditions d'utilisation et confidentialité.
 
-### 5.7 Analyse (v0.5, v0.7 à v0.9, dans le replay)
-Déclenchée par un tap sur un losange de rebond, puis **Analyser**.
-- Utilise les lignes détectées à l'écran 3. Si elles manquent : image figée, « Touchez les 4 coins du court », loupe sous le doigt.
-- Résultat en surimpression : lignes du court projetées en blanc, point de rebond en jaune, cercle d'incertitude autour.
-- Texte en trois lignes, sans verdict :
-  - « Rebond estimé à 4 cm à l'extérieur de la ligne de fond »
-  - « Marge d'erreur à cette distance : ± 9 cm »
-  - « Estimation : **70 % sûr que la balle est sortie** »
-- Mention fixe : « Indication, pas une décision. »
-- Entre 40 % et 60 %, on affiche « Trop incertain pour conclure » plutôt qu'un pourcentage proche de 50.
-
-### 5.8 Écran 6 · Corriger le score
-Liste des derniers points joués (qui a gagné, score après chaque point). Le joueur choisit le point où le score a dérapé et propose la correction. L'autre téléphone affiche la proposition : **Valider** / **Refuser**.
-
-### 5.9 Écran 7 · Fin de match
-Score final, durée, nombre de litiges. Message : « Les vidéos ont été supprimées de ce téléphone. » Un seul bouton : **Terminer**.
+### 5.10 Fin de match
+Qui gagne, en combien de sets et de temps, le score de chaque set, les points revus au VAR, les litiges réglés sans rejouer et leur durée moyenne, « Vidéos supprimées », **Terminer**. Les vidéos sont effacées dès que le match est gagné. Durée et temps des litiges sont mesurés sur le téléphone (le journal n'a pas d'heure) : un invité arrivé en cours de match compte depuis son arrivée.
 
 ## 6. États à concevoir
 
@@ -127,48 +92,53 @@ Score final, durée, nombre de litiges. Message : « Les vidéos ont été suppr
 | Désaccord de score entre téléphones | Bandeau « Scores différents » avec le journal et un bouton pour se resynchroniser sur l'hôte |
 | Voix non reconnue | Rien ne change, icône micro grisée brièvement, le tap reste disponible |
 | Chauffe | « Le téléphone chauffe : qualité réduite », passage à 30 fps |
-| Batterie faible (< 15 %) | Bandeau jaune, suggestion de brancher |
+| Batterie faible (< 15 %) | Bandeau orange, suggestion de brancher |
 | Stockage insuffisant | Blocage au lancement avec l'espace nécessaire |
 | Permission refusée | Écran d'explication et bouton vers les réglages |
 
 ## 7. Design system
 
+Source : Figma, page « Design System ». Dans le code : `src/shared/ui/theme.ts` (jetons) et les composants de `src/shared/ui/`.
+
 ### 7.1 Couleurs
 
 | Jeton | Valeur | Usage |
 |---|---|---|
-| `court` | `#3E7A57` | Primaire : actions principales, confirmations, en-têtes |
-| `ball` | `#E9B44C` | Secondaire : VAR, serveur, rebonds, focus |
-| `ink` | `#111111` | Fond des écrans de match, texte sur jaune |
-| `line` | `#FFFFFF` | Texte sur fond sombre, lignes du court, contours |
-| `ink-soft` | `#1E1E1E` | Barres et cartes sur fond noir |
-| `line-dim` | `#FFFFFF` à 60 % | Textes secondaires |
+| `bg` Noir | `#0A0A0A` | Fonds |
+| `card` Noir doux | `#161816` | Cartes, champs, bouton retour |
+| `text` Blanc | `#FFFFFF` | Texte, lignes, contours |
+| `textDim` Fumée | `#8A8F8C` | Textes secondaires |
+| `accent` Citron | `#D4F53C` | L'accent unique : l'action principale d'un écran, VAR, le serveur, les sons |
+| `warning` Orange | `#F2A93B` | Liaison instable (et repères de dev) |
+| `danger` Rouge | `#E5484D` | Liaison perdue, enregistrement, toujours en petit |
 
-Contrastes mesurés (WCAG) et règles qui en découlent :
+**Une seule action en citron par écran.** Contrastes :
 
 | Paire | Ratio | Règle |
 |---|---|---|
-| Blanc sur noir | 18,9 | Score et texte principal |
-| Noir sur jaune | 10,0 | Bouton VAR, pastilles |
-| Blanc sur vert | 5,1 | Boutons primaires (texte ≥ 18 pt gras) |
-| Vert sur noir | 3,7 | Décor et icônes seulement, **jamais** de texte |
-| Jaune sur blanc | 1,9 | **Interdit** |
-
-Les écrans de match sont en **fond noir** : meilleur contraste au soleil et économie de batterie sur écran OLED.
+| Blanc sur noir | 19,8 | Score, texte principal |
+| Citron sur noir | 16,0 | Accent |
+| Noir sur citron | 16,0 | Boutons d'action |
+| Fumée sur noir | 6,0 | Textes secondaires |
+| Citron sur blanc | 1,2 | **Interdit** |
 
 ### 7.2 Typographie
-- Police système (SF Pro sur iOS, Roboto sur Android), **chiffres tabulaires** pour que le score ne bouge pas.
-- Score : 160 à 220 pt, gras. Jeux et sets : 40 pt. Titres : 28 pt. Corps : 20 pt minimum. Rien en dessous de 16 pt.
-- Majuscules réservées aux libellés courts (VAR, REC).
+**Outfit** (Google Fonts), embarquée par le plugin `expo-font`, chiffres tabulaires.
+- Score : Regular 200 (le design system dit Thin 130 à 200, l'écran de match utilise Regular).
+- Titre d'écran : Light 28 à 40. Bouton : Medium 18 à 20 (VAR en SemiBold). Corps : Light 16 à 18.
+- Section : Medium 13, capitales, interlettrage 1,3. Les petites légendes vont jusqu'à 11.
 
 ### 7.3 Espacement et formes
-- Grille de 8 pt. Marges d'écran 24 pt.
-- Cibles tactiles : **64 pt minimum** (au-delà des 44 pt iOS et 48 dp Android, pour une main moite). Boutons de match : 80 pt de haut.
-- 16 pt d'écart minimum entre deux boutons d'action.
-- Coins arrondis 16 pt. Pas d'ombre : aplats et contours blancs de 2 pt.
+- Grille de 8 · 16 · 24. Coins arrondis 12 (16 pour une carte de plusieurs lignes).
+- Cibles **64 pt minimum** (80 pour un bouton de match). Contours fins de 1,5 pt, aucune ombre.
 
-### 7.4 Composants
-`ScoreDisplay`, `ServeDot`, `PointButton`, `VarButton`, `PendingBanner`, `LinkStatus`, `RecIndicator`, `ReplayPlayer`, `FrameStepper`, `SpeedPicker`, `Timeline` (avec `BounceMarker`), `OutcomeBar`, `CornerPicker`, `AnalysisCard`, `ConsentToggle`.
+### 7.4 Logo et icônes
+- `assets/logo/` : `lineo-full` (le nom, son o est la balle citron) et `lineo-symbol` (la balle seule, l'icône d'app). Toujours sur fond sombre, jamais recomposé ni recoloré.
+- `assets/icons/` : les icônes du design system, 24 pt, trait 2 pt, inspirées de Lucide ; leur blanc est `currentColor`. Hors Figma : `minus` (score), `bot` (dev).
+- `assets/images/` : l'icône d'app et le splash, aux noms par défaut d'Expo.
+
+### 7.5 Composants
+Partagés (`shared/ui`) : `Button` (primary, secondary, var, ghost), `Chip`, `TextField`, `Toggle`, `IconButton` (tool, plain, overlay), `ScreenTitle`, `StatusDot`, `ServeDot`, `Logo`, `Icon`, `Fade`, `MessageScreen`, `QrCode`, `ZoomableView`. Par écran : `ScoreDisplay`, `StatusPill`, `MatchInfo`, `MatchControls`, `MatchEndScreen`, `PendingBanner`, `ClipPlayer` (`Seekbar`, `PlayerControls`, `PlayerTools`, `PlayerTopBar`), `DecisionPanel`, `AssistedReading`, `BallTrackOverlay`.
 
 ## 8. Interactions et retours
 

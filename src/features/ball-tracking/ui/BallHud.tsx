@@ -64,5 +64,5 @@ export function BallHud({
 
 const styles = StyleSheet.create({
   hud: { backgroundColor: 'rgba(17,17,17,0.75)', borderRadius: radius, padding: 10, gap: 2 },
-  text: { color: colors.line, fontSize: 12, fontVariant: ['tabular-nums'] },
+  text: { color: colors.text, fontSize: 12, fontVariant: ['tabular-nums'] },
 });

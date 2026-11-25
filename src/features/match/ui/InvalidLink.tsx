@@ -10,7 +10,7 @@ export function InvalidLink() {
       message="Lien de session invalide."
       hint="Créez une session, ou scannez le QR code de l’hôte."
     >
-      <Button label="Accueil" variant="outline" onPress={() => router.replace('/')} />
+      <Button label="Accueil" variant="secondary" onPress={() => router.replace('/')} />
     </MessageScreen>
   );
 }

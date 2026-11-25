@@ -1,19 +1,26 @@
+import { StatusBar } from 'expo-status-bar';
 import { type ReactNode, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Video, { type VideoRef } from 'react-native-video';
 
-import { BallHud, BallTrackOverlay, useBallTrack } from '@/features/ball-tracking';
+import { BallHud, BallTrackOverlay, bounceMarks, useBallTrack } from '@/features/ball-tracking';
 import { buildTimeline, locate, type Segment } from '@/features/recording';
 import { stopBeforePeak, useSoundPeaks } from '@/features/sound-peaks';
 import { toUri } from '@/shared/native/files';
-import { colors, radius, touch } from '@/shared/ui/theme';
+import { Fade } from '@/shared/ui/Fade';
+import { colors, fonts } from '@/shared/ui/theme';
 import { ZoomableView } from '@/shared/ui/ZoomableView';
 import type { Court } from '@/sports/tennis';
 
-import { PlaybackPanel } from './components/PlaybackPanel';
+import { useAutoHide } from '../useAutoHide';
+import { AssistedReading } from './components/AssistedReading';
+import { PlayerControls } from './components/PlayerControls';
+import { PlayerTools, nextRate, type Rate } from './components/PlayerTools';
+import { type PointNav, PlayerTopBar } from './components/PlayerTopBar';
+import { Seekbar } from './components/Seekbar';
 
-const DEFAULT_RATE = 0.5;
 /** Where a point opens, in seconds before its end (the end is what players argue about) */
 const START_BEFORE_END_SECONDS = 1;
 /** A jump to a sound peak lands this long before it */
@@ -28,8 +35,10 @@ export function ClipPlayer({
   segments,
   fps,
   court,
-  header,
-  footer,
+  assistedReading,
+  point,
+  renderPanel,
+  devVideos,
   onVideoOrientation,
   onClose,
 }: {
@@ -37,8 +46,13 @@ export function ClipPlayer({
   fps: number;
   /** The court of the session: the ball tracking takes its settings from it */
   court: Court;
-  header: ReactNode;
-  footer: ReactNode;
+  /** The setting: shows the assisted reading card once the point is tracked */
+  assistedReading: boolean;
+  point: PointNav;
+  /** The decision panel beside the video, with its button to close it; none for a test video */
+  renderPanel: ((close: () => void) => ReactNode) | undefined;
+  /** Dev builds only: the switch to the test videos, next to the panel button */
+  devVideos: { on: boolean; onToggle: () => void } | undefined;
   /** How the point was filmed, once its video is loaded: the screen turns to match it */
   onVideoOrientation: (orientation: VideoOrientation) => void;
   onClose: () => void;
@@ -56,10 +70,16 @@ export function ClipPlayer({
   const initialSeekDone = useRef(false);
   const [activeIndex, setActiveIndex] = useState(initial.index);
   const [playing, setPlaying] = useState(false);
-  const [rate, setRate] = useState<number>(DEFAULT_RATE);
+  const [rate, setRate] = useState<Rate>(1);
+  const [muted, setMuted] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(true);
+  const insets = useSafeAreaInsets();
   const [timeS, setTimeS] = useState(initial.t);
   const peaks = useSoundPeaks(timeline);
   const ball = useBallTrack(timeline, timeS, court);
+  const bounces = useMemo(() => bounceMarks(ball.points, peaks), [ball.points, peaks]);
+  const [readingOpen, setReadingOpen] = useState(true);
 
   const setTime = (t: number) => {
     timeRef.current = t;
@@ -112,33 +132,77 @@ export function ClipPlayer({
     setPlaying(true);
   };
 
-  const back = (
-    <Pressable style={styles.close} onPress={onClose}>
-      <Text style={styles.closeText}>← Retour au score</Text>
-    </Pressable>
+  const chrome = useAutoHide();
+  // Any tap on a control counts as activity: the controls stay a few more seconds
+  const onTogglePlay = () => {
+    chrome.show();
+    togglePlay();
+  };
+  const onStepFrame = (direction: 1 | -1) => {
+    chrome.show();
+    stepFrame(direction);
+  };
+  const onJumpToPeak = (direction: 1 | -1) => {
+    chrome.show();
+    jumpToPeak(direction);
+  };
+  const onScrub = (t: number) => {
+    chrome.show();
+    pauseAt(t);
+  };
+  const tool = (action: () => void) => () => {
+    chrome.show();
+    action();
+  };
+  const chromeStyle = useAnimatedStyle(
+    () => ({ opacity: withTiming(chrome.visible ? 1 : 0, { duration: 200 }) }),
+    [chrome.visible],
   );
 
-  const top = (
-    <View style={styles.top}>
-      {back}
-      {header}
-    </View>
+  const panelShown = panelOpen && !fullscreen && renderPanel !== undefined;
+  const topBar = (
+    <PlayerTopBar
+      point={point}
+      onBack={onClose}
+      devVideos={devVideos}
+      onOpenPanel={
+        renderPanel && !panelShown
+          ? tool(() => {
+              setFullscreen(false);
+              setPanelOpen(true);
+            })
+          : undefined
+      }
+    />
   );
+  const panel = panelShown ? (
+    <SafeAreaView
+      style={[styles.panel, portrait && styles.panelPortrait]}
+      edges={portrait ? ['bottom', 'left', 'right'] : ['top', 'bottom', 'right']}
+    >
+      {renderPanel(() => setPanelOpen(false))}
+    </SafeAreaView>
+  ) : null;
 
   if (timeline.segments.length === 0) {
     return (
-      <SafeAreaView style={styles.empty}>
-        <View style={styles.emptyHeader}>{header}</View>
-        <Text style={styles.emptyText}>Pas de vidéo pour ce point.</Text>
-        {back}
-      </SafeAreaView>
+      <View style={[styles.container, portrait && styles.containerPortrait]}>
+        <View
+          style={[styles.stage, { paddingTop: insets.top + 16, paddingLeft: insets.left + 24 }]}
+        >
+          <View style={styles.emptyTop}>{topBar}</View>
+          <Text style={styles.emptyText}>Pas de vidéo pour ce point.</Text>
+        </View>
+        {panel}
+      </View>
     );
   }
 
   return (
     <View style={[styles.container, portrait && styles.containerPortrait]}>
+      <StatusBar hidden={fullscreen} />
       <View style={styles.stage}>
-        <ZoomableView>
+        <ZoomableView onTap={chrome.toggle}>
           {timeline.segments.map((segment, index) => (
             <Video
               key={segment.path}
@@ -152,7 +216,7 @@ export function ClipPlayer({
               rate={rate}
               // Sound at normal speed only: stretched to slow motion it is no help. Played even with
               // the phone on silent, which it usually is on court
-              muted={rate !== 1 || index !== activeIndex}
+              muted={muted || rate !== 1 || index !== activeIndex}
               ignoreSilentSwitch="ignore"
               repeat={false}
               progressUpdateInterval={33}
@@ -173,16 +237,18 @@ export function ClipPlayer({
             />
           ))}
           {ball.on && ball.video && (
-            <BallTrackOverlay points={ball.points} video={ball.video} timeS={timeS} />
+            <BallTrackOverlay
+              points={ball.points}
+              bounces={bounces}
+              video={ball.video}
+              timeS={timeS}
+            />
           )}
         </ZoomableView>
 
-        {ball.on && ball.frame && (
-          <SafeAreaView
-            style={[styles.hud, portrait && styles.hudPortrait]}
-            edges={portrait ? ['top'] : ['bottom', 'left']}
-            pointerEvents="none"
-          >
+        {/* Dev builds only: the tracking's figures, to tune it on a court */}
+        {__DEV__ && ball.on && ball.frame && (
+          <View style={[styles.hud, { bottom: insets.bottom + 72 }]} pointerEvents="none">
             <BallHud
               points={ball.points}
               timeS={timeS}
@@ -191,29 +257,95 @@ export function ClipPlayer({
               seen={ball.seen}
               extra={`${ball.ms.toFixed(0)} ms / image   trajectoire ${ball.trackMs.toFixed(0)} ms`}
             />
-          </SafeAreaView>
+          </View>
+        )}
+
+        {/* The controls, over the video like any player: they fade out after a few idle seconds */}
+        <Animated.View
+          style={[StyleSheet.absoluteFill, chromeStyle]}
+          pointerEvents={chrome.visible ? 'box-none' : 'none'}
+        >
+          <Fade from={0.85} to={0} style={styles.fadeTop} />
+          <Fade from={0} to={0.9} style={styles.fadeBottom} />
+          <View
+            style={[
+              styles.top,
+              {
+                top: insets.top + 16,
+                left: insets.left + 24,
+                right: (panelShown ? 0 : insets.right) + 24,
+              },
+            ]}
+            pointerEvents="box-none"
+          >
+            {topBar}
+          </View>
+          <View style={styles.center} pointerEvents="box-none">
+            <PlayerControls
+              playing={playing}
+              hasPeaks={peaks.length > 0}
+              onTogglePlay={onTogglePlay}
+              onStepFrame={onStepFrame}
+              onJumpToPeak={onJumpToPeak}
+            />
+          </View>
+          <View
+            style={[
+              styles.bottom,
+              {
+                bottom: insets.bottom + 16,
+                left: insets.left + 24,
+                right: (panelShown ? 0 : insets.right) + 24,
+              },
+            ]}
+            pointerEvents="box-none"
+          >
+            <Text style={styles.time}>
+              {clock(timeS)} / {clock(timeline.totalS)}
+            </Text>
+            <View style={styles.bottomRow}>
+              <Seekbar timeS={timeS} totalS={timeline.totalS} peaks={peaks} onSeek={onScrub} />
+              <PlayerTools
+                tracking={ball.on}
+                onTrack={tool(() => {
+                  setReadingOpen(true);
+                  ball.toggle();
+                })}
+                muted={muted}
+                onToggleMute={tool(() => setMuted(!muted))}
+                rate={rate}
+                onNextRate={tool(() => setRate(nextRate(rate)))}
+                fullscreen={fullscreen}
+                onToggleFullscreen={tool(() => setFullscreen(!fullscreen))}
+              />
+            </View>
+          </View>
+        </Animated.View>
+
+        {/* Once the whole point is tracked: stays over the video, the controls fade without it */}
+        {assistedReading && ball.on && ball.done && (
+          <View
+            style={[styles.reading, { top: insets.top + 72, left: insets.left + 24 }]}
+            pointerEvents="box-none"
+          >
+            <AssistedReading
+              open={readingOpen}
+              onOpen={() => setReadingOpen(true)}
+              onClose={() => setReadingOpen(false)}
+            />
+          </View>
         )}
       </View>
 
-      <PlaybackPanel
-        portrait={portrait}
-        header={top}
-        timeS={timeS}
-        totalS={timeline.totalS}
-        rate={rate}
-        onRate={setRate}
-        playing={playing}
-        onTogglePlay={togglePlay}
-        onStepFrame={stepFrame}
-        peaks={peaks}
-        onJumpToPeak={jumpToPeak}
-        onSeek={pauseAt}
-        ball={ball}
-        onTrackBall={ball.toggle}
-        footer={footer}
-      />
+      {panel}
     </View>
   );
+}
+
+/** 0:02 */
+function clock(seconds: number): string {
+  const s = Math.max(0, Math.floor(seconds));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 
 const styles = StyleSheet.create({
@@ -227,40 +359,33 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   containerPortrait: { flexDirection: 'column' },
-  /** The video alone: every control is in the panel, nothing hides the ball */
   stage: { flex: 1 },
   hidden: { opacity: 0 },
-  /** Top of the video in portrait (the panel is below it), bottom left in landscape */
-  hud: { position: 'absolute', bottom: 0, left: 0, padding: 8 },
-  hudPortrait: { top: 0, bottom: undefined },
-  top: { gap: 12 },
-  close: {
-    alignSelf: 'flex-start',
-    borderWidth: 2,
-    borderColor: colors.line,
-    borderRadius: radius,
-    paddingHorizontal: 18,
-    minHeight: touch,
-    justifyContent: 'center',
-  },
-  closeText: { color: colors.line, fontSize: 18, fontWeight: '700' },
-  empty: {
+  hud: { position: 'absolute', left: 0, paddingLeft: 24 },
+  reading: { position: 'absolute' },
+  fadeTop: { position: 'absolute', top: 0, left: 0, right: 0, height: 96 },
+  fadeBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 110 },
+  top: { position: 'absolute' },
+  center: {
     position: 'absolute',
     top: 0,
+    bottom: 0,
     left: 0,
     right: 0,
-    bottom: 0,
-    backgroundColor: colors.ink,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 24,
   },
-  emptyText: { color: colors.line, fontSize: 22 },
-  emptyHeader: {
-    alignSelf: 'stretch',
-    marginHorizontal: 16,
-    backgroundColor: colors.inkSoft,
-    borderRadius: radius,
-    padding: 12,
+  bottom: { position: 'absolute', gap: 8 },
+  bottomRow: { flexDirection: 'row', alignItems: 'center', gap: 18 },
+  time: { fontFamily: fonts.light, fontSize: 13, color: 'rgba(255,255,255,0.8)' },
+  panel: { width: 220, backgroundColor: colors.card },
+  panelPortrait: { width: undefined, maxHeight: '50%' },
+  emptyTop: { paddingRight: 24 },
+  emptyText: {
+    fontFamily: fonts.light,
+    fontSize: 20,
+    color: colors.text,
+    textAlign: 'center',
+    marginTop: 96,
   },
 });
