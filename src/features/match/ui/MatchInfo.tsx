@@ -77,9 +77,8 @@ export function MatchInfo({
           <IconButton icon="close" label="Fermer" variant="plain" onPress={onClose} />
           <View style={styles.linkList}>
             <Text style={styles.section}>Liaison</Text>
-            <LinkRow icon="bluetooth" name="Bluetooth" word={link.word} state={link.state} />
-            {/* UI only: the Wi-Fi fallback arrives with v0.6 */}
-            <LinkRow icon="wifi" name="Wi-Fi" word="Bientôt" state={undefined} />
+            <LinkRow icon="bluetooth" name="Bluetooth" {...link.bluetooth} />
+            <LinkRow icon="wifi" name="Wi-Fi" {...link.wifi} />
             <LinkRow icon="mic" name="Voix" word={voice.word} state={voice.state} />
           </View>
         </View>

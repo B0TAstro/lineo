@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ClipStats } from '@/features/recording';
+import type { MatchSession } from '@/features/session';
 import { colors, radius } from '@/shared/ui/theme';
 
 /** Dev builds only. What the phone measures (fps, files, events), for tests on a real court */
@@ -8,7 +9,7 @@ export function DevStats({
   fps,
   selectedFps,
   stats,
-  sessionId,
+  session,
   eventCount,
   voiceError,
   liveBall,
@@ -18,7 +19,7 @@ export function DevStats({
   fps: number;
   selectedFps: number | undefined;
   stats: ClipStats;
-  sessionId: string;
+  session: MatchSession;
   eventCount: number;
   voiceError: string | undefined;
   liveBall: boolean;
@@ -35,8 +36,9 @@ export function DevStats({
         fichiers supprimés · {stats.errorCount} erreurs
       </Text>
       <Text style={styles.text}>
-        Session {sessionId} · {eventCount} événements
+        Session {session.sessionId} · {eventCount} événements
       </Text>
+      <Text style={styles.text}>{links(session)}</Text>
       {voiceError !== undefined && <Text style={styles.text}>Voix : {voiceError}</Text>}
       <Pressable style={[styles.toggle, liveBall && styles.toggleOn]} onPress={onToggleLiveBall}>
         <Text style={[styles.text, liveBall && styles.toggleTextOn]}>
@@ -45,6 +47,21 @@ export function DevStats({
       </Pressable>
     </View>
   );
+}
+
+const ms = (value: number | undefined) => (value === undefined ? '—' : `${value} ms`);
+
+/** The heartbeat, to tune its thresholds on a court */
+function links(session: MatchSession): string {
+  if (session.role === 'host') {
+    const { byLink, rttMs, wifi } = session;
+    return (
+      `Bluetooth ${byLink.bluetooth} (${ms(rttMs.bluetooth)}) · ` +
+      `Wi-Fi ${byLink.wifi} (${ms(rttMs.wifi)}) · ${wifi.join(' ') || 'pas de Wi-Fi'}`
+    );
+  }
+  const { via, health } = session;
+  return `Par ${via ?? '—'} · Bluetooth ${health.bluetooth ?? '—'} · Wi-Fi ${health.wifi ?? '—'}`;
 }
 
 const styles = StyleSheet.create({

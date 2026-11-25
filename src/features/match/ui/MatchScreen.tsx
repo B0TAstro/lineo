@@ -211,7 +211,7 @@ export function MatchScreen({ session }: { session: MatchSession }) {
                 fps={camera.fps}
                 selectedFps={camera.selectedFps}
                 stats={stats}
-                sessionId={session.sessionId}
+                session={session}
                 eventCount={log.length}
                 voiceError={voice.error}
                 liveBall={liveBallOn}
@@ -237,7 +237,9 @@ export function MatchScreen({ session }: { session: MatchSession }) {
         <InviteOverlay
           sessionId={session.sessionId}
           sessionKey={session.key}
+          wifi={session.role === 'host' ? session.wifi : []}
           phones={session.role === 'host' ? session.guests + 1 : 1}
+          link={link.state}
           onClose={() => setShowQr(false)}
         />
       )}

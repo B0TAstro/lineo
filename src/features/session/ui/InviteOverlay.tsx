@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { IconButton } from '@/shared/ui/IconButton';
 import { QrCode } from '@/shared/ui/QrCode';
 import { ScreenTitle } from '@/shared/ui/ScreenTitle';
-import { StatusDot } from '@/shared/ui/StatusDot';
+import { type LinkState, StatusDot } from '@/shared/ui/StatusDot';
 import { colors, fonts, radius, space, type } from '@/shared/ui/theme';
 
 import { buildJoinLink } from '../logic/joinLink';
@@ -16,18 +16,24 @@ const CARD_PADDING = 25;
 
 /**
  * The host's QR code, over the match: another phone scans it to join, at any time. It carries the
- * session key: only a phone that scanned it can read or change the score.
+ * session key (only a phone that scanned it can read or change the score) and where the host
+ * listens on the Wi-Fi.
  */
 export function InviteOverlay({
   sessionId,
   sessionKey,
+  wifi,
   phones,
+  link,
   onClose,
 }: {
   sessionId: string;
   sessionKey: string;
+  /** The host's Wi-Fi addresses (`ip:port`), empty with no Wi-Fi */
+  wifi: string[];
   /** Phones in the session, the host included */
   phones: number;
+  link: LinkState;
   onClose: () => void;
 }) {
   const { height } = useWindowDimensions();
@@ -50,7 +56,7 @@ export function InviteOverlay({
             </View>
           </View>
           <View style={styles.status}>
-            <StatusDot state="ok" size={8} />
+            <StatusDot state={link} size={8} />
             <Text style={styles.statusText}>
               {phones} téléphone{phones > 1 ? 's' : ''} dans la session · en attente du suivant
             </Text>
@@ -59,7 +65,7 @@ export function InviteOverlay({
       </View>
       <View style={styles.card}>
         <QrCode
-          value={buildJoinLink({ sessionId, key: sessionKey })}
+          value={buildJoinLink({ sessionId, key: sessionKey, wifi })}
           size={card - 2 * CARD_PADDING}
         />
       </View>
