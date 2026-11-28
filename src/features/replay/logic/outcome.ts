@@ -5,19 +5,12 @@ import type { SideId } from '@/sports/tennis';
 export type ReplayOutcome = { kind: 'point'; winner: SideId } | { kind: 'replayed' };
 
 /**
- * The events that record the players' decision, then send every phone back to the score.
- * A point waiting for the other side is confirmed (for the winner they chose) or rejected; otherwise the
- * last counted point is kept, given to the other side, or removed.
+ * The events that record the players' decision, then send every phone back to the score: the
+ * last counted point is kept, given to the other side, or removed (played again)
  */
 export function outcomeEvents(view: MatchView, outcome: ReplayOutcome): MatchEvent[] {
   const events: MatchEvent[] = [];
-  if (view.pending !== undefined) {
-    events.push(
-      outcome.kind === 'point'
-        ? { type: 'point-confirmed', winner: outcome.winner }
-        : { type: 'point-rejected' },
-    );
-  } else if (outcome.kind === 'point') {
+  if (outcome.kind === 'point') {
     if (view.points.at(-1) !== outcome.winner) {
       events.push({ type: 'point-corrected', winner: outcome.winner });
     }

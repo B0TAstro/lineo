@@ -23,12 +23,17 @@ function hostLinks(sessionId: string, key: string): CreateHostLinks {
     codec: () => new SealedCodec<GuestMessage, Out>(bytes, randomBytes, 'host'),
     // The guests are counted by their pongs, on every link: not by Bluetooth subscriptions
     bluetooth: (codec, onMessage) => new BleHost(sessionId, codec, onMessage, () => {}),
-    wifi: (codec, onMessage) => new WifiHost(nativeLanLink, codec, onMessage),
+    wifi: (codec, onMessage) => new WifiHost(sessionId, nativeLanLink, codec, onMessage),
   };
 }
 
 /** The host's session: `SessionHost` does the work, this wires it to React. */
-export function useHostSession(sessionId: string, key: string, form: SetupForm): HostSession {
+export function useHostSession(
+  sessionId: string,
+  key: string,
+  form: SetupForm,
+  phrase: string | undefined,
+): HostSession {
   const [host] = useState(() => new SessionHost(form, hostLinks(sessionId, key)));
   useEffect(() => {
     host.start();
@@ -40,8 +45,10 @@ export function useHostSession(sessionId: string, key: string, form: SetupForm):
   return {
     role: 'host',
     sessionId,
+    device: 'host',
     key,
     form,
+    phrase,
     view,
     log: state.log,
     dispatch: host.dispatch,

@@ -7,6 +7,8 @@ import type { LinkKind, LinkStatus } from './native/Transport';
 /** What every phone of the session has, host or guest. */
 type SessionBase = {
   sessionId: string;
+  /** This phone in the log ('host', or the guest's random id): who tapped + or − */
+  device: string;
   /** The session key, shown in the host's QR code. */
   key: string;
   log: readonly LoggedEvent[];
@@ -19,6 +21,8 @@ export type HostSession = SessionBase & {
   role: 'host';
   form: SetupForm;
   view: MatchView;
+  /** The session phrase, for a guest to type instead of scanning the QR code. */
+  phrase: string | undefined;
   /** Bluetooth on (guests can join by it), or off: refused or unavailable. */
   link: 'connected' | 'off';
   /** Where guests reach this phone on the local Wi-Fi (`ip:port`); empty with no Wi-Fi. */

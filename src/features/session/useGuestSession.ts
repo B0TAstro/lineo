@@ -26,7 +26,7 @@ function guestLinks(sessionId: string, key: string): CreateGuestLinks {
     bluetooth: (codec, { onMessage, onStatus, onConnected }) =>
       new BleGuest(sessionId, codec, onMessage, onStatus, onConnected),
     wifi: (codec, { onMessage, onStatus, onConnected }) =>
-      new WifiGuest(nativeLanLink, codec, onMessage, onStatus, onConnected),
+      new WifiGuest(sessionId, nativeLanLink, codec, onMessage, onStatus, onConnected),
   };
 }
 
@@ -44,9 +44,8 @@ function overall({ via, health, status }: GuestState): LinkStatus {
  * addresses from the QR code.
  */
 export function useGuestSession(sessionId: string, key: string, wifi: string[]): GuestSession {
-  const [guest] = useState(
-    () => new SessionGuest(toBase64Url(randomBytes(6)), wifi, guestLinks(sessionId, key)),
-  );
+  const [device] = useState(() => toBase64Url(randomBytes(6)));
+  const [guest] = useState(() => new SessionGuest(device, wifi, guestLinks(sessionId, key)));
   useEffect(() => {
     guest.start();
     return () => guest.stop();
@@ -57,6 +56,7 @@ export function useGuestSession(sessionId: string, key: string, wifi: string[]):
   return {
     role: 'guest',
     sessionId,
+    device,
     key,
     log: state.log,
     dispatch: guest.dispatch,

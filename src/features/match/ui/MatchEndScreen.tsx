@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { VarSummary } from '@/features/replay';
@@ -9,15 +9,19 @@ import { ServeDot } from '@/shared/ui/ServeDot';
 import { colors, fonts, radius, space, type } from '@/shared/ui/theme';
 import { type MatchState, type SetScore, sideName, type SideId } from '@/sports/tennis';
 
+import type { HandPoint } from '../logic/handPoints';
+
 /**
- * The end of the match, on every phone: who won, the score of every set, what the VAR did, and the
- * proof that the videos are gone (they are deleted as this screen opens)
+ * The end of the match, on every phone: who won, the score of every set, what the VAR did, every
+ * + and − tapped by hand (they count with no confirmation: everyone sees them here, and where),
+ * and the proof that the videos are gone (they are deleted as this screen opens)
  */
 export function MatchEndScreen({
   state,
   sets,
   teams,
   vars,
+  handPoints,
   durationMs,
   averageVarMs,
 }: {
@@ -26,6 +30,7 @@ export function MatchEndScreen({
   /** UI only: the players of each team in doubles */
   teams: Record<SideId, string[]> | undefined;
   vars: VarSummary;
+  handPoints: HandPoint[];
   durationMs: number;
   averageVarMs: number | undefined;
 }) {
@@ -104,9 +109,26 @@ export function MatchEndScreen({
               label="Litiges réglés sans rejouer"
               value={`${vars.settled} sur ${vars.closed}`}
               accent
-              last
             />
+            <Figure label="Points mis à la main" value={String(handPoints.length)} last />
           </View>
+          {handPoints.length > 0 && (
+            <ScrollView style={styles.hand} contentContainerStyle={styles.handContent}>
+              {handPoints.map((point, i) => (
+                <View key={i} style={styles.handRow}>
+                  <Text style={[styles.handSign, !point.added && styles.handRemoved]}>
+                    {point.added ? '+1' : '−1'}
+                  </Text>
+                  <Text style={styles.handName} numberOfLines={1}>
+                    {point.name}
+                  </Text>
+                  <Text style={styles.handDetail} numberOfLines={1}>
+                    {point.score} · {point.phone}
+                  </Text>
+                </View>
+              ))}
+            </ScrollView>
+          )}
           {averageVarMs !== undefined && (
             <Text style={styles.caption}>
               Litiges réglés en moyenne en {Math.round(averageVarMs / 1000)} s après le replay.
@@ -214,6 +236,19 @@ const styles = StyleSheet.create({
   figureValue: { fontFamily: fonts.light, fontSize: 20, color: colors.text },
   figureAccent: { color: colors.accent },
   caption: { fontFamily: fonts.light, fontSize: 12, color: colors.textDim },
+  hand: { maxHeight: 120, flexGrow: 0 },
+  handContent: { gap: 6 },
+  handRow: { flexDirection: 'row', alignItems: 'center', gap: space.s },
+  handSign: {
+    width: 26,
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    color: colors.accent,
+    fontVariant: ['tabular-nums'],
+  },
+  handRemoved: { color: colors.warning },
+  handName: { flex: 1, fontFamily: fonts.regular, fontSize: 13, color: colors.text },
+  handDetail: { fontFamily: fonts.light, fontSize: 12, color: colors.textDim },
   footer: { flexDirection: 'row', gap: 48 },
   deleted: {
     flex: 1,

@@ -1,13 +1,11 @@
 import { StyleSheet, View } from 'react-native';
 
-import { PendingBanner } from '@/features/score';
 import type { MatchEvent, MatchView } from '@/features/session';
 import { Button } from '@/shared/ui/Button';
-import { sideName } from '@/sports/tennis';
 
 /**
- * The bar under the score: Quitter, Pause and VAR, or the proposed point to confirm. The points
- * themselves are the + and − next to the names
+ * The bar under the score: Quitter, Pause and VAR. The points themselves are the + and − next to
+ * the names
  */
 export function MatchControls({
   view,
@@ -26,34 +24,16 @@ export function MatchControls({
   paused: boolean;
   onTogglePause: () => void;
 }) {
-  const { state, pending } = view;
-
   return (
     <View style={styles.bar}>
-      {pending !== undefined ? (
-        <PendingBanner
-          winnerName={sideName(state, pending)}
-          onConfirm={() => dispatch({ type: 'point-confirmed' })}
-          onReject={() => dispatch({ type: 'point-rejected' })}
-        />
-      ) : (
-        <>
-          <Button
-            label="Quitter"
-            icon="exit"
-            variant="ghost"
-            onPress={onLeave}
-            style={styles.small}
-          />
-          <Button
-            label={paused ? 'Reprendre' : 'Pause'}
-            icon={paused ? 'play' : 'pause'}
-            variant="ghost"
-            onPress={onTogglePause}
-            style={styles.small}
-          />
-        </>
-      )}
+      <Button label="Quitter" icon="exit" variant="ghost" onPress={onLeave} style={styles.small} />
+      <Button
+        label={paused ? 'Reprendre' : 'Pause'}
+        icon={paused ? 'play' : 'pause'}
+        variant="ghost"
+        onPress={onTogglePause}
+        style={styles.small}
+      />
       <Button
         label={opening ? '…' : 'VAR'}
         icon="rewind"
