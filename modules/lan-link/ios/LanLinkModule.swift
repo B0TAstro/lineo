@@ -121,13 +121,14 @@ public final class LanLinkModule: Module {
     let peer = Peer(id: id, connection: connection)
     peers[id] = peer
     var closed = false
-    connection.stateUpdateHandler = { [weak self] state in
+    // Weak peer: it owns the connection, which owns this handler
+    connection.stateUpdateHandler = { [weak self, weak peer] state in
       guard let self else { return }
       switch state {
       case .ready:
         onReady?(true, id)
         self.sendEvent("onOpen", ["id": id, "inbound": inbound])
-        self.read(peer)
+        if let peer { self.read(peer) }
       case .failed, .cancelled:
         onReady?(false, id)
         self.peers[id] = nil

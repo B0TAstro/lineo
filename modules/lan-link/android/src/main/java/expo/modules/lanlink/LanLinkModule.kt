@@ -9,8 +9,7 @@ import android.os.Build
 import expo.modules.kotlin.Promise
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
-import java.io.BufferedReader
-import java.io.InputStreamReader
+import java.io.ByteArrayOutputStream
 import java.net.Inet4Address
 import java.net.InetSocketAddress
 import java.net.NetworkInterface
@@ -20,10 +19,14 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
 
 /** A connection that is not up after this long is given up (host gone, wrong network). */
 private const val CONNECT_TIMEOUT_MS = 5_000
+/** A line longer than this is not one of ours: the connection is closed (as on iOS). */
+private const val MAX_LINE_BYTES = 1_000_000
+private const val NEWLINE = '\n'.code.toByte()
 /** How long Android may take to hand over the Wi-Fi network. */
 private const val WIFI_REQUEST_MS = 3_000
 /** Wi-Fi and hotspot interfaces: not cellular (rmnet, ccmni), not VPN (tun). */
@@ -145,17 +148,37 @@ class LanLinkModule : Module() {
     sendEvent("onOpen", mapOf("id" to id, "inbound" to inbound))
     threads.execute {
       try {
-        val reader = BufferedReader(InputStreamReader(socket.getInputStream(), Charsets.UTF_8))
-        while (true) {
-          val line = reader.readLine() ?: break
-          sendEvent("onLine", mapOf("id" to id, "line" to line))
-        }
+        readLines(socket, id)
       } catch (e: Exception) {
         // broken or closed: same ending
       }
       peer.close()
     }
     return id
+  }
+
+  /**
+   * Reads line by line, with a cap: before JS can check the session key, anyone on the network
+   * may connect, and an endless line must not fill the memory.
+   */
+  private fun readLines(socket: Socket, id: String) {
+    val input = socket.getInputStream()
+    val line = ByteArrayOutputStream()
+    val buffer = ByteArray(8192)
+    while (true) {
+      val count = input.read(buffer)
+      if (count < 0) return
+      var start = 0
+      for (i in 0 until count) {
+        if (buffer[i] != NEWLINE) continue
+        line.write(buffer, start, i - start)
+        sendEvent("onLine", mapOf("id" to id, "line" to String(line.toByteArray(), Charsets.UTF_8)))
+        line.reset()
+        start = i + 1
+      }
+      line.write(buffer, start, count - start)
+      if (line.size() > MAX_LINE_BYTES) return
+    }
   }
 
   private inner class Peer(val id: String, private val socket: Socket) {
@@ -165,15 +188,19 @@ class LanLinkModule : Module() {
 
     fun send(line: String) {
       if (closed.get()) return
-      writer.execute {
-        try {
-          socket.getOutputStream().apply {
-            write("$line\n".toByteArray(Charsets.UTF_8))
-            flush()
+      try {
+        writer.execute {
+          try {
+            socket.getOutputStream().apply {
+              write("$line\n".toByteArray(Charsets.UTF_8))
+              flush()
+            }
+          } catch (e: Exception) {
+            close()
           }
-        } catch (e: Exception) {
-          close()
         }
+      } catch (e: RejectedExecutionException) {
+        // closed by the reader at the same moment: nothing to send to any more
       }
     }
 
