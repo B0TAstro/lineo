@@ -54,7 +54,7 @@ export function SelectRow<T extends string | number>({
                   setOpen(false);
                 }}
                 accessibilityRole="radio"
-                accessibilityState={{ selected, disabled: option.disabled ?? false }}
+                accessibilityState={{ checked: selected, disabled: option.disabled ?? false }}
                 style={({ pressed }) => [styles.option, pressed && styles.pressed]}
               >
                 <Text
