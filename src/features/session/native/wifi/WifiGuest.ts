@@ -17,6 +17,8 @@ export class WifiGuest<In, Out> implements GuestTransport<Out> {
   private stopped = false;
   private trying = false;
   private retry: ReturnType<typeof setTimeout> | undefined;
+  /** Android: the app is routed through the Wi-Fi (asked again before each try until it is). */
+  private bound = false;
 
   constructor(
     private readonly lan: LanLink,
@@ -41,8 +43,6 @@ export class WifiGuest<In, Out> implements GuestTransport<Out> {
         this.lost();
       }),
     ];
-    // Android: a Wi-Fi with no internet would otherwise lose to mobile data
-    await this.lan.bindToWifi().catch(() => false);
     void this.tryEndpoints();
     return true;
   }
@@ -52,6 +52,17 @@ export class WifiGuest<In, Out> implements GuestTransport<Out> {
     if (endpoints.join() === this.endpoints.join()) return;
     this.endpoints = [...endpoints];
     if (this.connection === undefined) void this.tryEndpoints();
+  }
+
+  /**
+   * The host's pings stopped coming while the socket still looks open (the Wi-Fi went away without
+   * a word): drop it and try the addresses again.
+   */
+  reconnect() {
+    if (this.connection === undefined) return;
+    this.lan.close(this.connection);
+    this.connection = undefined;
+    this.lost();
   }
 
   send(message: Out) {
@@ -65,15 +76,22 @@ export class WifiGuest<In, Out> implements GuestTransport<Out> {
     this.unsubscribe = [];
     if (this.connection !== undefined) this.lan.close(this.connection);
     this.connection = undefined;
+    this.bound = false;
     this.lan.unbindWifi();
   }
 
   private async tryEndpoints() {
-    if (this.stopped || this.trying || this.endpoints.length === 0) return;
+    // Already connected: a second socket would replace the first and leave it open
+    const busy = this.trying || this.connection !== undefined;
+    if (this.stopped || busy || this.endpoints.length === 0) return;
     this.trying = true;
     clearTimeout(this.retry);
     this.onStatus('connecting');
+    // Android: a Wi-Fi with no internet would otherwise lose to mobile data. Android gives up the
+    // request after a few seconds: asked again on every try until it holds
+    if (!this.bound) this.bound = await this.lan.bindToWifi().catch(() => false);
     for (const endpoint of this.endpoints) {
+      if (this.stopped) break;
       const [host, port] = endpoint.split(':');
       try {
         const id = await this.lan.connect(host ?? '', Number(port));

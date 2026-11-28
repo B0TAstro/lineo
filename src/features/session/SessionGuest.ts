@@ -4,6 +4,7 @@ import type { SetupForm } from '@/sports/tennis';
 import { chooseLink } from './logic/chooseLink';
 import type { Codec } from './logic/codec';
 import { receiveEvent, receiveSnapshot } from './logic/guestLog';
+import { isLocalEndpoint } from './logic/joinLink';
 import { type LinkHealth, linkHealth } from './logic/linkHealth';
 import type { LoggedEvent, MatchEvent } from './logic/matchLog';
 import type { GuestMessage, HostMessage } from './logic/messages';
@@ -29,7 +30,7 @@ export type CreateGuestLinks = {
   wifi: (
     codec: GuestCodec,
     callbacks: Callbacks,
-  ) => Pick<WifiGuest<In, GuestMessage>, 'start' | 'send' | 'stop' | 'setEndpoints'>;
+  ) => Pick<WifiGuest<In, GuestMessage>, 'start' | 'send' | 'stop' | 'setEndpoints' | 'reconnect'>;
 };
 
 export type GuestState = {
@@ -137,7 +138,8 @@ export class SessionGuest {
     if (message.t === 'ping') {
       this.lastPing[kind] = Date.now();
       this.links[kind]?.send({ t: 'pong', n: message.n, device: this.device });
-      if (message.wifi.length > 0) this.openWifi(message.wifi);
+      const wifi = message.wifi.filter(isLocalEndpoint);
+      if (wifi.length > 0) this.openWifi(wifi);
       return;
     }
     if (message.t === 'snapshot') {
@@ -168,6 +170,8 @@ export class SessionGuest {
       wifi,
       bluetoothOkForMs: this.bluetoothOkSince === undefined ? 0 : now - this.bluetoothOkSince,
     });
+    // The Wi-Fi went silent with its socket still open: drop it and try the addresses again
+    if (wifi === 'lost' && state.health.wifi !== 'lost') this.wifi?.reconnect();
     if (bluetooth !== state.health.bluetooth || wifi !== state.health.wifi) {
       this.store.set({ health: { ...(bluetooth && { bluetooth }), ...(wifi && { wifi }) } });
     }
