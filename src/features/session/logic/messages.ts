@@ -20,5 +20,6 @@ export type HostMessage<Setup> =
  * 2: every message is sealed with the session key from the QR code.
  * 3: and signed with the side that sealed it (host or guest).
  * 4: heartbeat (ping, pong) and the host's Wi-Fi addresses in the QR code.
+ * 5: + and − count at once (point-tapped), with the phone they were tapped on.
  */
-export const PROTOCOL_VERSION = 4;
+export const PROTOCOL_VERSION = 5;

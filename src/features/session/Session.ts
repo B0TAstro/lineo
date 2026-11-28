@@ -7,6 +7,8 @@ import type { LinkKind, LinkStatus } from './native/Transport';
 /** What every phone of the session has, host or guest. */
 type SessionBase = {
   sessionId: string;
+  /** This phone in the log ('host', or the guest's random id): who tapped + or − */
+  device: string;
   /** The session key, shown in the host's QR code. */
   key: string;
   log: readonly LoggedEvent[];

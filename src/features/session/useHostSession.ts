@@ -45,6 +45,7 @@ export function useHostSession(
   return {
     role: 'host',
     sessionId,
+    device: 'host',
     key,
     form,
     phrase,

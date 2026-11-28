@@ -23,6 +23,7 @@ import { MatchControls } from './MatchControls';
 import { MatchEndScreen } from './MatchEndScreen';
 import { MatchInfo } from './MatchInfo';
 import { StatusPill } from './StatusPill';
+import { handPoints } from '../logic/handPoints';
 import { MatchClock } from '../logic/MatchClock';
 
 export function MatchScreen({ session }: { session: MatchSession }) {
@@ -97,6 +98,7 @@ export function MatchScreen({ session }: { session: MatchSession }) {
         sets={sets}
         teams={session.form.teams}
         vars={vars}
+        handPoints={handPoints(setup, log)}
         {...clock.summary()}
       />
     );
@@ -123,21 +125,15 @@ export function MatchScreen({ session }: { session: MatchSession }) {
   }
 
   const heard = heardLine(voice);
-  const undo = () =>
-    Alert.alert('Annuler le dernier point ?', 'Le score revient au point précédent.', [
-      { text: 'Non', style: 'cancel' },
-      {
-        text: 'Annuler le point',
-        style: 'destructive',
-        onPress: () => dispatch({ type: 'point-undone' }),
-      },
-    ]);
+  // + and − count at once, no confirmation: the end screen lists them, with the phone they were
+  // tapped on, for everyone to see
   const controls: PointControls = {
-    canAdd: view.pending === undefined && !matchOver,
+    canAdd: !matchOver,
     // Only the side that won the last point can take it back
-    canRemove: (side: SideId) => view.pending === undefined && view.points.at(-1) === side,
-    onAdd: (side) => dispatch({ type: 'point-proposed', winner: side }),
-    onRemove: undo,
+    canRemove: (side: SideId) => view.points.at(-1) === side,
+    onAdd: (side) =>
+      dispatch({ type: 'point-tapped', winner: side, afterSeq: view.seq, by: session.device }),
+    onRemove: () => dispatch({ type: 'point-undone', by: session.device }),
   };
 
   return (

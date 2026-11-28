@@ -12,8 +12,8 @@ export type VarSummary = {
 
 /**
  * Read from the log: every opening of the VAR, and what happened before it closed. A point given
- * back to be played again (rejected proposal, removed point) is not settled; a confirmed or
- * corrected point is, and so is closing without changing anything (the players agreed)
+ * back to be played again (removed) is not settled; a corrected point is, and so is closing
+ * without changing anything (the players agreed)
  */
 export function varSummary(log: readonly LoggedEvent[]): VarSummary {
   const summary: VarSummary = { reviewed: 0, settled: 0, closed: 0 };
@@ -26,7 +26,6 @@ export function varSummary(log: readonly LoggedEvent[]): VarSummary {
         open = true;
         replayed = false;
         break;
-      case 'point-rejected':
       case 'point-undone':
         if (open) replayed = true;
         break;
