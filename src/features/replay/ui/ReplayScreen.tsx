@@ -1,9 +1,8 @@
-import { lockAsync, OrientationLock } from 'expo-screen-orientation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import type { Court } from '@/sports/tennis';
 
-import { ClipPlayer, type VideoOrientation } from './ClipPlayer';
+import { ClipPlayer } from './ClipPlayer';
 import { DecisionPanel, type Side } from './components/DecisionPanel';
 import type { PointNav } from './components/PlayerTopBar';
 import type { ReplayOutcome } from '../logic/outcome';
@@ -16,6 +15,7 @@ type Props = {
   fps: number;
   /** The setting: the assisted reading card once the point is tracked */
   assistedReading: boolean;
+  replayStart: 'start' | 'end';
   court: Court;
   sides: readonly [Side, Side];
   onOutcome: (outcome: ReplayOutcome) => void;
@@ -35,6 +35,7 @@ export function ReplayScreen({
   initialIndex,
   fps,
   assistedReading,
+  replayStart,
   court,
   sides,
   onOutcome,
@@ -43,16 +44,6 @@ export function ReplayScreen({
   const [index, setIndex] = useState(initialIndex);
   // Dev builds only: test videos instead of the match's points
   const [devClips, setDevClips] = useState<ReplayClip[]>();
-  const [orientation, setOrientation] = useState<VideoOrientation>('landscape');
-
-  // The screen turns with the video: a clip filmed upright is played upright, full height
-  useEffect(() => {
-    void lockAsync(
-      orientation === 'portrait' ? OrientationLock.PORTRAIT_UP : OrientationLock.LANDSCAPE,
-    );
-  }, [orientation]);
-  // Back to the score, which is landscape
-  useEffect(() => () => void lockAsync(OrientationLock.LANDSCAPE), []);
 
   const shown = devClips ?? clips;
   const clip = shown[index];
@@ -83,6 +74,7 @@ export function ReplayScreen({
       fps={clip.fps ?? fps}
       court={court}
       assistedReading={assistedReading}
+      replayStart={replayStart}
       point={point}
       renderPanel={
         // A test video is not a point of the match: nothing to decide
@@ -91,7 +83,6 @@ export function ReplayScreen({
           : (close) => <DecisionPanel sides={sides} onOutcome={onOutcome} onClose={close} />
       }
       devVideos={__DEV__ ? { on: devClips !== undefined, onToggle: toggleDevVideos } : undefined}
-      onVideoOrientation={setOrientation}
       onClose={onClose}
     />
   );

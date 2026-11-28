@@ -22,7 +22,7 @@ export function StatusPill({ recording, link }: { recording: boolean; link: Link
       </View>
       <View style={styles.divider} />
       <View style={styles.group}>
-        <Icon name="bluetooth" size={16} />
+        <Icon name={link.via === 'wifi' ? 'wifi' : 'bluetooth'} size={16} />
         {open && <Text style={styles.link}>{link.text}</Text>}
         <StatusDot state={link.state} size={6} />
       </View>

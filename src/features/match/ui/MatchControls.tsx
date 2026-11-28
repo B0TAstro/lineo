@@ -14,12 +14,17 @@ export function MatchControls({
   opening,
   dispatch,
   onLeave,
+  paused,
+  onTogglePause,
 }: {
   view: MatchView;
   /** When VAR pressed, the clips are still being written */
   opening: boolean;
   dispatch: (event: MatchEvent) => void;
   onLeave: () => void;
+  /** The match is paused on this phone: no recording, no voice, the clock stopped */
+  paused: boolean;
+  onTogglePause: () => void;
 }) {
   const { state, pending } = view;
 
@@ -40,13 +45,11 @@ export function MatchControls({
             onPress={onLeave}
             style={styles.small}
           />
-          {/* UI only: pausing the match (and its recording) is not wired yet */}
           <Button
-            label="Pause"
-            icon="pause"
+            label={paused ? 'Reprendre' : 'Pause'}
+            icon={paused ? 'play' : 'pause'}
             variant="ghost"
-            disabled
-            onPress={() => {}}
+            onPress={onTogglePause}
             style={styles.small}
           />
         </>

@@ -1,6 +1,5 @@
-import { StatusBar } from 'expo-status-bar';
 import { type ReactNode, useMemo, useRef, useState } from 'react';
-import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Video, { type VideoRef } from 'react-native-video';
@@ -21,12 +20,10 @@ import { PlayerTools, nextRate, type Rate } from './components/PlayerTools';
 import { type PointNav, PlayerTopBar } from './components/PlayerTopBar';
 import { Seekbar } from './components/Seekbar';
 
-/** Where a point opens, in seconds before its end (the end is what players argue about) */
+/** Opened on the end of the point: this long before it (the end is what players argue about) */
 const START_BEFORE_END_SECONDS = 1;
 /** A jump to a sound peak lands this long before it */
 const PEAK_LEAD_SECONDS = 0.15;
-
-export type VideoOrientation = 'portrait' | 'landscape';
 
 /**
  * Plays one point: one file almost always. When a point has several files they are stacked, all loaded, and only the active one is visible, so switching files needs no reload
@@ -36,10 +33,10 @@ export function ClipPlayer({
   fps,
   court,
   assistedReading,
+  replayStart,
   point,
   renderPanel,
   devVideos,
-  onVideoOrientation,
   onClose,
 }: {
   segments: readonly Segment[];
@@ -48,22 +45,20 @@ export function ClipPlayer({
   court: Court;
   /** The setting: shows the assisted reading card once the point is tracked */
   assistedReading: boolean;
+  /** From the settings: the start of the point, or its last second */
+  replayStart: 'start' | 'end';
   point: PointNav;
   /** The decision panel beside the video, with its button to close it; none for a test video */
   renderPanel: ((close: () => void) => ReactNode) | undefined;
   /** Dev builds only: the switch to the test videos, next to the panel button */
   devVideos: { on: boolean; onToggle: () => void } | undefined;
-  /** How the point was filmed, once its video is loaded: the screen turns to match it */
-  onVideoOrientation: (orientation: VideoOrientation) => void;
   onClose: () => void;
 }) {
-  const window = useWindowDimensions();
-  const portrait = window.height > window.width;
   const timeline = useMemo(() => buildTimeline(segments), [segments]);
   const initial = useMemo(() => {
-    const t = Math.max(0, timeline.totalS - START_BEFORE_END_SECONDS);
+    const t = replayStart === 'end' ? Math.max(0, timeline.totalS - START_BEFORE_END_SECONDS) : 0;
     return { t, ...locate(timeline, t) };
-  }, [timeline]);
+  }, [timeline, replayStart]);
 
   const videoRefs = useRef<(VideoRef | null)[]>([]);
   const timeRef = useRef(initial.t);
@@ -72,7 +67,6 @@ export function ClipPlayer({
   const [playing, setPlaying] = useState(false);
   const [rate, setRate] = useState<Rate>(1);
   const [muted, setMuted] = useState(false);
-  const [fullscreen, setFullscreen] = useState(false);
   const [panelOpen, setPanelOpen] = useState(true);
   const insets = useSafeAreaInsets();
   const [timeS, setTimeS] = useState(initial.t);
@@ -159,34 +153,24 @@ export function ClipPlayer({
     [chrome.visible],
   );
 
-  const panelShown = panelOpen && !fullscreen && renderPanel !== undefined;
+  const panelShown = panelOpen && renderPanel !== undefined;
   const topBar = (
     <PlayerTopBar
       point={point}
       onBack={onClose}
       devVideos={devVideos}
-      onOpenPanel={
-        renderPanel && !panelShown
-          ? tool(() => {
-              setFullscreen(false);
-              setPanelOpen(true);
-            })
-          : undefined
-      }
+      onOpenPanel={renderPanel && !panelShown ? tool(() => setPanelOpen(true)) : undefined}
     />
   );
   const panel = panelShown ? (
-    <SafeAreaView
-      style={[styles.panel, portrait && styles.panelPortrait]}
-      edges={portrait ? ['bottom', 'left', 'right'] : ['top', 'bottom', 'right']}
-    >
+    <SafeAreaView style={styles.panel} edges={['top', 'bottom', 'right']}>
       {renderPanel(() => setPanelOpen(false))}
     </SafeAreaView>
   ) : null;
 
   if (timeline.segments.length === 0) {
     return (
-      <View style={[styles.container, portrait && styles.containerPortrait]}>
+      <View style={styles.container}>
         <View
           style={[styles.stage, { paddingTop: insets.top + 16, paddingLeft: insets.left + 24 }]}
         >
@@ -199,8 +183,7 @@ export function ClipPlayer({
   }
 
   return (
-    <View style={[styles.container, portrait && styles.containerPortrait]}>
-      <StatusBar hidden={fullscreen} />
+    <View style={styles.container}>
       <View style={styles.stage}>
         <ZoomableView onTap={chrome.toggle}>
           {timeline.segments.map((segment, index) => (
@@ -222,7 +205,6 @@ export function ClipPlayer({
               progressUpdateInterval={33}
               onLoad={(e) => {
                 if (index !== initial.index) return;
-                onVideoOrientation(e.naturalSize.orientation);
                 // Already on the right frame: no seek, so no onSeek event to wait for
                 if (initial.localS < 1 / fps) onInitialSeekDone();
                 else videoRefs.current[index]?.seek(initial.localS, 0);
@@ -315,8 +297,6 @@ export function ClipPlayer({
                 onToggleMute={tool(() => setMuted(!muted))}
                 rate={rate}
                 onNextRate={tool(() => setRate(nextRate(rate)))}
-                fullscreen={fullscreen}
-                onToggleFullscreen={tool(() => setFullscreen(!fullscreen))}
               />
             </View>
           </View>
@@ -358,7 +338,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#000',
   },
-  containerPortrait: { flexDirection: 'column' },
   stage: { flex: 1 },
   hidden: { opacity: 0 },
   hud: { position: 'absolute', left: 0, paddingLeft: 24 },
@@ -379,7 +358,6 @@ const styles = StyleSheet.create({
   bottomRow: { flexDirection: 'row', alignItems: 'center', gap: 18 },
   time: { fontFamily: fonts.light, fontSize: 13, color: 'rgba(255,255,255,0.8)' },
   panel: { width: 220, backgroundColor: colors.card },
-  panelPortrait: { width: undefined, maxHeight: '50%' },
   emptyTop: { paddingRight: 24 },
   emptyText: {
     fontFamily: fonts.light,

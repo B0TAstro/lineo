@@ -141,7 +141,14 @@ const styles = StyleSheet.create({
   },
   players: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
   playersText: { fontFamily: fonts.light, fontSize: 12, color: colors.textDim },
-  point: { ...type.score, color: colors.text, marginTop: 6 },
+  // iOS takes the negative letter spacing off after the last digit too: the box comes out
+  // narrower than the digit and crops its right edge. The padding gives that width back
+  point: {
+    ...type.score,
+    color: colors.text,
+    marginTop: 6,
+    paddingHorizontal: -type.score.letterSpacing,
+  },
   pointButton: {
     width: 30,
     height: 30,

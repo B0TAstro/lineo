@@ -2,7 +2,7 @@
   "expo": {
     "name": "Lineo",
     "slug": "lineo",
-    "version": "0.5.0",
+    "version": "0.6.0",
     "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "lineo",
@@ -12,7 +12,8 @@
       "bundleIdentifier": "com.tomboullay.lineo",
       "supportsTablet": false,
       "infoPlist": {
-        "NSCameraUsageDescription": "Lineo filme le court point par point pour revoir un point contesté. La vidéo reste sur ce téléphone et est supprimée en fin de match."
+        "NSCameraUsageDescription": "Lineo filme le court point par point pour revoir un point contesté. La vidéo reste sur ce téléphone et est supprimée en fin de match.",
+        "NSLocalNetworkUsageDescription": "Lineo relie les téléphones de la session par le Wi-Fi quand le Bluetooth faiblit, pour partager le score. Aucune vidéo n'est envoyée."
       }
     },
     "android": {

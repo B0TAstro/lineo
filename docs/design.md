@@ -57,17 +57,17 @@ Consigne, nombre de téléphones dans la session, et le QR code sur sa carte bla
 ### 5.5 Score (pendant tout le match)
 Paysage, fond noir, le score en grand : rien d'autre ne doit attirer l'œil.
 - À gauche, un rail d'icônes : Infos, QR (hôte), changer de caméra, micro.
-- En haut à droite : la pastille d'état (REC, Bluetooth, téléphones liés, état du lien), repliable.
+- En haut à droite : la pastille d'état (REC, icône du lien en usage, Bluetooth ou Wi-Fi, téléphones liés, état du lien), repliable.
 - Au centre : chaque camp avec **−** (retirer le dernier point, seulement le camp qui l'a gagné) et **+** (proposer le point), la pastille du serveur, les points en Outfit 200 ; entre les deux, les jeux de chaque set et « SET 3 » / « TIE-BREAK ». En double, les prénoms sous le nom d'équipe.
-- En bas : **Quitter**, **Pause** (*UI only*), **VAR** (citron). Un point proposé prend la place de Quitter et Pause : « Point pour Léa ? » avec Refuser / Valider.
-- **Infos** : le retour caméra, la liaison (Bluetooth, Wi-Fi *à venir*, voix), REC avec les images par seconde mesurées, et la configuration (points en mémoire, taille d'un point, stockage, cadence). La caméra tourne en permanence, même panneau fermé. *UI only* : Calibrer (v0.7).
+- En bas : **Quitter**, **Pause** (enregistrement, voix et horloge arrêtés sur ce téléphone, « Reprendre »), **VAR** (citron). Un point proposé prend la place de Quitter et Pause : « Point pour Léa ? » avec Refuser / Valider.
+- **Infos** : le retour caméra, la liaison (Bluetooth, Wi-Fi, voix, chacun avec son état), REC avec les images par seconde mesurées, et la configuration (points en mémoire, taille d'un point, stockage, cadence). La caméra tourne en permanence, même panneau fermé. *UI only* : Calibrer (v0.7).
 
 ### 5.6 Replay (litige sur une balle)
 S'ouvre **sur tous les téléphones de la session en même temps**, chacun avec sa propre caméra. Un vrai lecteur, dont les contrôles s'effacent après 3 s sans activité (un tap les rappelle) :
 - En haut : retour au score, le point (« POINT EN COURS ») et ses flèches, le panneau de décision.
 - Au centre : image précédente, son précédent, lecture, son suivant, image suivante.
-- En bas : la barre de lecture (tap ou glisser) avec un **losange citron par son fort**, puis ✦ suivi de la balle, son, vitesse **x1 → x0,5 → x0,25**, plein écran.
-- S'ouvre à x1, une seconde avant la fin du point. Pincer pour zoomer, double-tap pour revenir. Le son ne joue qu'à x1.
+- En bas : la barre de lecture (tap ou glisser) avec un **losange citron par son fort**, puis ✦ suivi de la balle, son, vitesse **x1 → x0,5 → x0,25**. Pas de plein écran : un tap sur la vidéo efface déjà les contrôles, et le panneau de décision se ferme par son bouton.
+- S'ouvre à x1, au début du point, ou une seconde avant sa fin (Paramètres). Pincer pour zoomer, double-tap pour revenir. Le son ne joue qu'à x1.
 - Le panneau de décision : Point Léa, Point Tom, Point rejoué, puis l'autre camp valide. **← Retour** ferme sans rien changer.
 - Le suivi de la balle : une sphère citron, une traînée blanche légère, et une marque au sol à chaque son fort (*UI only* : un son n'est pas encore un rebond).
 - Build dev : l'icône robot remplace les points du match par les vidéos de test.
@@ -79,7 +79,7 @@ Quand le suivi a analysé tout le point, une carte s'ouvre sur la vidéo : « 70
 Aujourd'hui : **−** à côté du camp qui a gagné le dernier point. *À venir* : la liste des derniers points, pour corriger plus loin en arrière.
 
 ### 5.9 Paramètres
-Enregistrement (images par seconde, points gardés en mémoire), pendant le match (score à la voix, lecture assistée du replay), vos données (vidéos supprimées en fin de match : toujours), la phrase « tout est filmé et traité sur ce téléphone », puis la version. Les réglages s'appliquent au match suivant. *UI only* : conditions d'utilisation et confidentialité.
+Enregistrement (images par seconde, points gardés en mémoire), pendant le match (score à la voix, lecture assistée du replay, ouverture du replay : début ou fin du point), vos données (vidéos supprimées en fin de match : toujours ; *UI only* : non, sauf les points revus). Les choix s'ouvrent sur place sous leur ligne, le choix actif coché en citron, la phrase « tout est filmé et traité sur ce téléphone », puis la version. Les réglages s'appliquent au match suivant. S'ouvre aussi par la roue de l'écran de match, en calque, avec « S'applique au prochain match ». *UI only* : conditions d'utilisation et confidentialité.
 
 ### 5.10 Fin de match
 Qui gagne, en combien de sets et de temps, le score de chaque set, les points revus au VAR, les litiges réglés sans rejouer et leur durée moyenne, « Vidéos supprimées », **Terminer**. Les vidéos sont effacées dès que le match est gagné. Durée et temps des litiges sont mesurés sur le téléphone (le journal n'a pas d'heure) : un invité arrivé en cours de match compte depuis son arrivée.

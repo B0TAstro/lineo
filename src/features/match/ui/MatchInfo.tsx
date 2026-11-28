@@ -37,6 +37,7 @@ export function MatchInfo({
   stats,
   targetFps,
   savedPoints,
+  liveTracking,
   previewOverlay,
   dev,
 }: {
@@ -54,9 +55,11 @@ export function MatchInfo({
   /** From the settings, read when the match started */
   targetFps: number;
   savedPoints: number;
+  /** Dev builds only: the replay's ball tracking, live on the camera image (off by default) */
+  liveTracking?: { on: boolean; onToggle: () => void };
   /** Drawn over the camera image (dev: the live ball tracking) */
   previewOverlay?: ReactNode;
-  /** Dev builds only: the measures, under the configuration */
+  /** Dev builds only: the live tracking's figures, under the configuration */
   dev?: ReactNode;
 }) {
   const insets = useSafeAreaInsets();
@@ -77,9 +80,8 @@ export function MatchInfo({
           <IconButton icon="close" label="Fermer" variant="plain" onPress={onClose} />
           <View style={styles.linkList}>
             <Text style={styles.section}>Liaison</Text>
-            <LinkRow icon="bluetooth" name="Bluetooth" word={link.word} state={link.state} />
-            {/* UI only: the Wi-Fi fallback arrives with v0.6 */}
-            <LinkRow icon="wifi" name="Wi-Fi" word="Bientôt" state={undefined} />
+            <LinkRow icon="bluetooth" name="Bluetooth" {...link.bluetooth} />
+            <LinkRow icon="wifi" name="Wi-Fi" {...link.wifi} />
             <LinkRow icon="mic" name="Voix" word={voice.word} state={voice.state} />
           </View>
         </View>
@@ -116,6 +118,25 @@ export function MatchInfo({
               <Text style={styles.calibrateText}>Calibrer</Text>
             </Pressable>
             <View style={styles.imageTools}>
+              {liveTracking && (
+                // Same look as the replay's tracking button: the sparkle, lemon when on
+                <Pressable
+                  onPress={liveTracking.onToggle}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    liveTracking.on ? 'Arrêter le suivi de la balle' : 'Suivre la balle en direct'
+                  }
+                  accessibilityState={{ selected: liveTracking.on }}
+                  hitSlop={10}
+                  style={({ pressed }) => [
+                    styles.track,
+                    liveTracking.on && styles.trackOn,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Icon name="sparkle" color={liveTracking.on ? colors.onAccent : colors.accent} />
+                </Pressable>
+              )}
               <IconButton
                 icon="cameraSwitch"
                 label={
@@ -247,7 +268,22 @@ const styles = StyleSheet.create({
   },
   calibrateText: { fontFamily: fonts.medium, fontSize: 13, color: colors.onAccent },
   disabled: { opacity: 0.5 },
-  imageTools: { position: 'absolute', right: 16, bottom: 16, flexDirection: 'row', gap: space.s },
+  imageTools: {
+    position: 'absolute',
+    right: 16,
+    bottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s,
+  },
+  track: {
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: overlay,
+  },
+  trackOn: { backgroundColor: colors.accent },
+  pressed: { opacity: 0.4 },
   config: { width: 130, flexGrow: 0 },
   configContent: { gap: 14, paddingTop: 10 },
   figure: { gap: 2 },

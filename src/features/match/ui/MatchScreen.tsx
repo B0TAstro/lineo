@@ -9,7 +9,7 @@ import { useClipRecorder, useClipsFromLog, useMatchCamera } from '@/features/rec
 import { outcomeEvents, ReplayScreen, useVarReplay, varSummary } from '@/features/replay';
 import { type PointControls, ScoreDisplay } from '@/features/score';
 import { InviteOverlay, linkStatus, type MatchSession } from '@/features/session';
-import { appSettings } from '@/features/settings';
+import { appSettings, SettingsScreen } from '@/features/settings';
 import { heardLine, useVoice } from '@/features/voice';
 import { useAppActive } from '@/shared/native/useAppActive';
 import { Button } from '@/shared/ui/Button';
@@ -18,7 +18,6 @@ import { MessageScreen } from '@/shared/ui/MessageScreen';
 import { colors, fonts, space } from '@/shared/ui/theme';
 import { roleLabel, setScores, type SideId, sideName, toMatchSetup } from '@/sports/tennis';
 
-import { DevStats } from './DevStats';
 import { MatchControls } from './MatchControls';
 import { MatchEndScreen } from './MatchEndScreen';
 import { MatchInfo } from './MatchInfo';
@@ -36,16 +35,22 @@ export function MatchScreen({ session }: { session: MatchSession }) {
   useKeepAwake(); // otherwise the screen locks and the OS stops the camera
   // Dev builds only: the replay's ball tracking, live on the camera, to tune it on a court
   const [liveBallOn, setLiveBallOn] = useState(false);
+  // Dev builds only: what Vosk heard, under the status pill (players never see it)
+  const [showHeard, setShowHeard] = useState(false);
   const liveBall = useLiveBallTrack(__DEV__ && liveBallOn, session.form.court);
   const camera = useMatchCamera(liveBall.onFrame);
   const appActive = useAppActive();
   const [showQr, setShowQr] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [voiceOn, setVoiceOn] = useState(settings.voice);
+  const [showSettings, setShowSettings] = useState(false);
+  // On this phone only: each phone films for itself, a pause is not an event of the match
+  const [paused, setPaused] = useState(false);
 
-  // Recording pauses during the replay, to spare the phone (heat, battery), and in the background, where the OS stops the camera
+  // Recording pauses during the replay, to spare the phone (heat, battery), in the background,
+  // where the OS stops the camera, and while the players pause the match (and the voice with it)
   const matchOver = state.matchWonBy !== undefined;
-  const cameraActive = !view.varOpen && appActive && !matchOver;
+  const cameraActive = !view.varOpen && appActive && !matchOver && !paused;
   const { stats, clips } = useClipRecorder(
     camera.videoOutput,
     camera.running && cameraActive,
@@ -65,6 +70,7 @@ export function MatchScreen({ session }: { session: MatchSession }) {
   const vars = useMemo(() => varSummary(log), [log]);
   const [clock] = useState(() => new MatchClock());
   useEffect(() => clock.varChanged(view.varOpen), [clock, view.varOpen]);
+  useEffect(() => clock.pausedChanged(paused), [clock, paused]);
   // Nothing outlives the match (GDPR): the videos go as soon as it is won, the end screen says so
   useEffect(() => {
     if (!matchOver) return;
@@ -149,18 +155,30 @@ export function MatchScreen({ session }: { session: MatchSession }) {
             label={voiceOn ? 'Couper la voix' : 'Activer la voix'}
             onPress={() => setVoiceOn(!voiceOn)}
           />
+          {__DEV__ && (
+            <IconButton
+              icon="bot"
+              label={showHeard ? 'Masquer ce que la voix entend' : 'Voir ce que la voix entend'}
+              selected={showHeard}
+              onPress={() => setShowHeard(!showHeard)}
+            />
+          )}
         </View>
 
         <View style={styles.main}>
           <View style={styles.top}>
+            {showHeard && heard !== null && (
+              <Text style={styles.heard} numberOfLines={1}>
+                {heard}
+              </Text>
+            )}
             <StatusPill recording={stats.recording} link={link} />
-            {/* The settings open from the home screen: they apply when a match starts */}
+            {/* The match keeps the settings it started with: changes are for the next one */}
             <IconButton
               icon="settings"
               label="Paramètres"
               variant="plain"
-              disabled
-              onPress={() => {}}
+              onPress={() => setShowSettings(true)}
             />
           </View>
           <View style={styles.board}>
@@ -170,17 +188,14 @@ export function MatchScreen({ session }: { session: MatchSession }) {
               teams={session.form.teams}
               controls={controls}
             />
-            {heard !== null && (
-              <Text style={styles.heard} numberOfLines={1}>
-                {heard}
-              </Text>
-            )}
           </View>
           <MatchControls
             view={view}
             opening={view.varOpen && !replay}
             dispatch={dispatch}
             onLeave={leave}
+            paused={paused}
+            onTogglePause={() => setPaused(!paused)}
           />
         </View>
       </SafeAreaView>
@@ -199,45 +214,41 @@ export function MatchScreen({ session }: { session: MatchSession }) {
         stats={stats}
         targetFps={settings.fps}
         savedPoints={settings.savedPoints}
+        {...(__DEV__ && {
+          liveTracking: { on: liveBallOn, onToggle: () => setLiveBallOn(!liveBallOn) },
+        })}
         previewOverlay={
           liveBall.onFrame && liveBall.frame ? (
             <BallTrackOverlay points={liveBall.trail} video={liveBall.frame} timeS={liveBall.t} />
           ) : undefined
         }
         dev={
-          __DEV__ ? (
-            <>
-              <DevStats
-                fps={camera.fps}
-                selectedFps={camera.selectedFps}
-                stats={stats}
-                sessionId={session.sessionId}
-                eventCount={log.length}
-                voiceError={voice.error}
-                liveBall={liveBallOn}
-                liveBallMs={liveBall.ms}
-                onToggleLiveBall={() => setLiveBallOn(!liveBallOn)}
-              />
-              {liveBall.onFrame && liveBall.frame && (
-                <BallHud
-                  points={liveBall.trail}
-                  timeS={liveBall.t}
-                  frame={liveBall.frame}
-                  frames={liveBall.frames}
-                  seen={liveBall.seen}
-                  extra={`${liveBall.ms.toFixed(0)} ms / image`}
-                />
-              )}
-            </>
+          liveBall.onFrame && liveBall.frame ? (
+            <BallHud
+              points={liveBall.trail}
+              timeS={liveBall.t}
+              frame={liveBall.frame}
+              frames={liveBall.frames}
+              seen={liveBall.seen}
+              extra={`${liveBall.ms.toFixed(0)} ms / image`}
+            />
           ) : undefined
         }
       />
+
+      {showSettings && (
+        <View style={StyleSheet.absoluteFill}>
+          <SettingsScreen duringMatch onClose={() => setShowSettings(false)} />
+        </View>
+      )}
 
       {showQr && (
         <InviteOverlay
           sessionId={session.sessionId}
           sessionKey={session.key}
+          wifi={session.role === 'host' ? session.wifi : []}
           phones={session.role === 'host' ? session.guests + 1 : 1}
+          link={link.state}
           onClose={() => setShowQr(false)}
         />
       )}
@@ -248,6 +259,7 @@ export function MatchScreen({ session }: { session: MatchSession }) {
           initialIndex={replay.initialIndex}
           fps={camera.selectedFps ?? settings.fps}
           assistedReading={settings.assistedReading}
+          replayStart={settings.replayStart}
           court={session.form.court}
           sides={[
             { id: a.id, name: sideName(state, a.id), role: roleLabel(state, a.id) },
@@ -275,5 +287,5 @@ const styles = StyleSheet.create({
   main: { flex: 1, paddingBottom: space.m },
   top: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: space.s },
   board: { flex: 1, justifyContent: 'center' },
-  heard: { fontFamily: fonts.light, fontSize: 15, color: colors.textSoft, textAlign: 'center' },
+  heard: { flex: 1, fontFamily: fonts.light, fontSize: 15, color: colors.textSoft },
 });
