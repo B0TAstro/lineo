@@ -1,7 +1,13 @@
 import { type ReactNode, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeIn, LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Camera, type CameraDevice, type CameraSessionConfig } from 'react-native-vision-camera';
+import {
+  Camera,
+  type CameraDevice,
+  type CameraSessionConfig,
+  NativeFrameRendererView,
+} from 'react-native-vision-camera';
 
 import {
   type Calibration,
@@ -102,7 +108,12 @@ export function MatchInfo({
         </View>
       ) : null}
 
-      <View style={open ? styles.image : styles.imageClosed}>
+      {/* Calibrating: the image grows to the full screen, the same Camera (never remounted, the
+          recording goes on), then the calibration comes over it */}
+      <Animated.View
+        layout={LinearTransition.duration(250)}
+        style={open && calibrating ? styles.imageFull : open ? styles.image : styles.imageClosed}
+      >
         <Camera
           style={StyleSheet.absoluteFill}
           device={device}
@@ -119,14 +130,23 @@ export function MatchInfo({
           resizeMode={calibrating ? 'contain' : 'cover'}
         />
         {open && calibrating ? (
-          <CalibrationLayer
-            initial={court.calibration}
-            onCancel={() => setCalibrating(false)}
-            onValidate={(calibration) => {
-              court.onValidate(calibration);
-              setCalibrating(false);
-            }}
-          />
+          <Animated.View entering={FadeIn.delay(250)} style={StyleSheet.absoluteFill}>
+            <CalibrationLayer
+              initial={court.calibration}
+              live={
+                <NativeFrameRendererView
+                  style={StyleSheet.absoluteFill}
+                  renderer={camera.frameRenderer}
+                />
+              }
+              onMagnify={camera.magnify}
+              onCancel={() => setCalibrating(false)}
+              onValidate={(calibration) => {
+                court.onValidate(calibration);
+                setCalibrating(false);
+              }}
+            />
+          </Animated.View>
         ) : open ? (
           <>
             {court.geometry && <CourtLinesOverlay geometry={court.geometry} mode="cover" />}
@@ -186,7 +206,7 @@ export function MatchInfo({
             </View>
           </>
         ) : null}
-      </View>
+      </Animated.View>
 
       {open ? (
         <ScrollView style={styles.config} contentContainerStyle={styles.configContent}>
@@ -270,6 +290,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
   },
   imageClosed: { width: 1, height: 1 },
+  imageFull: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    zIndex: 1,
+    backgroundColor: colors.bg,
+  },
   badge: {
     position: 'absolute',
     flexDirection: 'row',

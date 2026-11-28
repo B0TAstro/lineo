@@ -3,6 +3,7 @@ import {
   CommonResolutions,
   useCameraDevice,
   useFrameOutput,
+  useFrameRenderer,
   useVideoOutput,
 } from 'react-native-vision-camera';
 import { createSynchronizable, scheduleOnRN } from 'react-native-worklets';
@@ -38,6 +39,11 @@ export function useMatchCamera(onCameraFrame?: (frame: CameraFrame) => void) {
   const { fps, onFrameTimestamp } = useFpsMeter();
   const [selectedFps, setSelectedFps] = useState<number>();
   const [running, setRunning] = useState(false);
+
+  // The calibration loupe: while it is up, the frames the output already gets are also drawn into
+  // it (`frameRenderer`), with no extra camera output
+  const frameRenderer = useFrameRenderer();
+  const [magnifying] = useState(() => createSynchronizable(false));
 
   const live = onCameraFrame !== undefined;
   // Shared with the camera thread: true while JS is busy with a frame, so frames are skipped
@@ -79,6 +85,7 @@ export function useMatchCamera(onCameraFrame?: (frame: CameraFrame) => void) {
           t: timestamp,
         });
       }
+      if (magnifying.getDirty()) frameRenderer.renderFrame(frame);
       frame.dispose();
       scheduleOnRN(onFrameTimestamp, timestamp);
     },
@@ -99,6 +106,9 @@ export function useMatchCamera(onCameraFrame?: (frame: CameraFrame) => void) {
     device,
     frameOutput,
     videoOutput,
+    /** Draws the live frames into a NativeFrameRendererView while `magnify(true)` */
+    frameRenderer,
+    magnify: (on: boolean) => magnifying.setBlocking(on),
     fps,
     selectedFps,
     setSelectedFps,
