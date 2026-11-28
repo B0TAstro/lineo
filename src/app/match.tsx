@@ -17,14 +17,27 @@ export default function MatchRoute() {
 
   const session = toSession(params.s, params.k, params.w);
   if (!session) return <InvalidLink />;
+  // Keyed by the session: other parameters on the same screen start a new session from scratch,
+  // never the old one's links and key under the new code
+  const identity = `${session.sessionId}:${session.key}`;
   if (params.role === 'guest') {
     return (
-      <GuestMatch sessionId={session.sessionId} sessionKey={session.key} wifi={session.wifi} />
+      <GuestMatch
+        key={identity}
+        sessionId={session.sessionId}
+        sessionKey={session.key}
+        wifi={session.wifi}
+      />
     );
   }
   if (params.role === 'host') {
     return (
-      <HostMatch sessionId={session.sessionId} sessionKey={session.key} rawForm={params.form} />
+      <HostMatch
+        key={`${identity}:${params.form ?? ''}`}
+        sessionId={session.sessionId}
+        sessionKey={session.key}
+        rawForm={params.form}
+      />
     );
   }
   return <InvalidLink />;
